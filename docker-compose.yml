@@ -1,0 +1,36 @@
+services:
+  # 1. Spring Boot 애플리케이션 서비스
+  app:
+    # 현재 디렉토리의 Dockerfile을 사용하여 빌드
+    build: .
+    container_name: spring-boot-app
+    # 호스트 포트 8080을 컨테이너 포트 8080에 연결
+    ports:
+      - "8080:8080"
+    # MySQL 컨테이너에 대한 의존성이 없습니다.
+    # depends_on: []
+
+    # 애플리케이션 환경 설정 주입
+    environment:
+      # --- AWS RDS 연결 설정 ---
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_URL}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      # JPA/Hibernate 설정
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: 'true'
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: 'true'
+
+      # --- JWT 설정 ---
+      JWT_ISSUER: ajufresh@gmail.com
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+
+      # --- OAuth2 설정 ---
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+    restart: always
+
+# 이 구성에서는 로컬 볼륨이 필요하지 않습니다.
+# volumes:
+#   mysql_data:
