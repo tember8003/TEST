@@ -2,7 +2,7 @@ services:
   # 1. Spring Boot 애플리케이션 서비스
   app:
     # 현재 디렉토리의 Dockerfile을 사용하여 빌드
-    build: .
+    image: ghcr.io/tember8003/untitle:latest
     container_name: spring-boot-app
     # 호스트 포트 8080을 컨테이너 포트 8080에 연결
     ports:
