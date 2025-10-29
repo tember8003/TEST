@@ -1,0 +1,73 @@
+name: Deply Spring Boot to EC2 with Docker
+n:
+  push:
+    branches:
+      - main # main 브랜치에 푸시될 때마다 실행
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------
+      # Stage 1: Docker 레지스트리 로그인 (GHCR 사용)
+      # ----------------------------------------------------
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      # ----------------------------------------------------
+      # Stage 2: Docker 이미지 빌드 및 푸시
+      # ----------------------------------------------------
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # ----------------------------------------------------
+      # Stage 3: SSH를 통해 EC2에 접속 및 배포
+      # ----------------------------------------------------
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Starting deployment on EC2..."
+            # 1. EC2에서 최신 코드(docker-compose.yml 포함)를 받습니다.
+            # ⭐ 워크플로우가 접속하는 디렉토리로 이동해야 합니다.
+            # ⭐ (예시 경로: /home/{{ secrets.EC2_USER }}/chapter11)
+            cd /home/ubuntu/chapter11 
+            git pull origin main 
+            
+            # 2. EC2에서도 GHCR에 로그인
+            # 권한 문제를 피하기 위해 sudo를 사용하지 않는 경우로 가정합니다.
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 3. 최신 Docker 이미지 풀 (pull)
+            # 권한 문제를 피하기 위해 docker 그룹에 사용자를 추가했을 경우 sudo는 생략합니다.
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            
+            # 4. 앱 재시작 (Docker Compose V2 명령으로 수정됨)
+            # ⭐ docker-compose.yml 파일에 정의된 서비스 이름(예: 'app' 또는 'spring-boot-app')을 사용해야 합니다.
+            # ⭐ docker-compose.yml 파일에 따라 'app' 서비스 이름으로 가정하고, sudo를 사용합니다.
+            sudo docker compose -f docker-compose.yml up -d --force-recreate app
+            
+            echo "Deployment complete."
