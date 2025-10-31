@@ -21,6 +21,10 @@ spring:
               - email
               - profile
 
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
+
 springdoc:
   api-docs:
     path: /api-docs

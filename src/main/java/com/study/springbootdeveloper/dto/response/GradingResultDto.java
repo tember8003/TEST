@@ -1,4 +1,4 @@
-package com.study.springbootdeveloper.dto;
+package com.study.springbootdeveloper.dto.response;
 
 import lombok.Builder;
 import lombok.Data;

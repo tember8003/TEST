@@ -1,4 +1,4 @@
-package com.study.springbootdeveloper.dto;
+package com.study.springbootdeveloper.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;

@@ -6,7 +6,7 @@ import static com.study.springbootdeveloper.type.ErrorCode.INTERNAL_SERVER_ERROR
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.study.springbootdeveloper.dto.ErrorResponse;
+import com.study.springbootdeveloper.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import com.study.springbootdeveloper.type.ErrorCode;

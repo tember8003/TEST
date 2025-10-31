@@ -1,7 +1,7 @@
 package com.study.springbootdeveloper.service;
 
 import com.study.springbootdeveloper.domain.Problem;
-import com.study.springbootdeveloper.dto.GradingResultDto;
+import com.study.springbootdeveloper.dto.response.GradingResultDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
