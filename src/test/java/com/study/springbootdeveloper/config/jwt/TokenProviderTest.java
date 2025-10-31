@@ -1,8 +1,7 @@
 package com.study.springbootdeveloper.config.jwt;
 
-import io.jsonwebtoken.Jwts;
 import com.study.springbootdeveloper.domain.User;
-import me.shinsunyoung.springbootdeveloper.repository.UserRepository;
+import com.study.springbootdeveloper.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
