@@ -1,10 +1,12 @@
 package com.study.springbootdeveloper.service;
 
 import com.study.springbootdeveloper.domain.Problem;
+import com.study.springbootdeveloper.handler.RestApiException;
 import com.study.springbootdeveloper.repository.ProblemRepository;
 import com.study.springbootdeveloper.repository.SolvedProblemRepository;
 import com.study.springbootdeveloper.type.Category;
 import com.study.springbootdeveloper.type.DifficultyType;
+import com.study.springbootdeveloper.type.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +36,7 @@ public class ProblemService {
      */
     public Problem getProblemById(Long problemId) {
         return problemRepository.findById(problemId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문제를 찾을 수 없습니다. ID: " + problemId));
+                .orElseThrow(() -> new RestApiException(ErrorCode.PROBLEM_NOT_FOUND));
     }
 
     /**

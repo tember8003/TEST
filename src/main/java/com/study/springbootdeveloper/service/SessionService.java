@@ -4,11 +4,13 @@ import com.study.springbootdeveloper.domain.Problem;
 import com.study.springbootdeveloper.domain.Session;
 import com.study.springbootdeveloper.domain.SolvedProblem;
 import com.study.springbootdeveloper.domain.User;
+import com.study.springbootdeveloper.handler.RestApiException;
 import com.study.springbootdeveloper.repository.SessionRepository;
 import com.study.springbootdeveloper.repository.SolvedProblemRepository;
 import com.study.springbootdeveloper.repository.UserRepository;
 import com.study.springbootdeveloper.type.Category;
 import com.study.springbootdeveloper.type.DifficultyType;
+import com.study.springbootdeveloper.type.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,9 +47,8 @@ public class SessionService {
         // 해당 카테고리/난이도의 문제가 충분한지 확인
         long availableProblems = problemService.countByCategoryAndDifficulty(category, difficulty);
         if (availableProblems < totalQuestions) {
-            throw new IllegalArgumentException(
-                    String.format("문제가 부족합니다. 요청: %d개, 사용가능: %d개", totalQuestions, availableProblems)
-            );
+            throw new RestApiException(ErrorCode.INSUFFICIENT_PROBLEMS,
+                    String.format("문제가 부족합니다. 요청: %d개, 사용가능: %d개", totalQuestions, availableProblems));
         }
 
         Session session = Session.builder()
@@ -68,7 +69,7 @@ public class SessionService {
     @Transactional(readOnly = true)
     public Session getSession(Long sessionId) {
         return sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RestApiException(ErrorCode.SESSION_NOT_FOUND));
     }
 
     /**
@@ -91,7 +92,7 @@ public class SessionService {
         Session session = getSession(sessionId);
 
         if (session.getCompletedAt() != null) {
-            throw new IllegalStateException("이미 완료된 세션입니다.");
+            throw new RestApiException(ErrorCode.SESSION_ALREADY_COMPLETED);
         }
 
         session.complete();

@@ -4,7 +4,6 @@ import com.study.springbootdeveloper.domain.Problem;
 import com.study.springbootdeveloper.domain.Session;
 import com.study.springbootdeveloper.domain.SolvedProblem;
 import com.study.springbootdeveloper.domain.User;
-import com.study.springbootdeveloper.dto.GradingResultDto;
 import com.study.springbootdeveloper.handler.RestApiException;
 import com.study.springbootdeveloper.repository.ProblemRepository;
 import com.study.springbootdeveloper.repository.SessionRepository;
@@ -43,11 +42,11 @@ public class SolvingService {
     public SolvedProblem submitAnswer(Long userId, Long problemId, String userAnswer) {
         User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RestApiException(ErrorCode.PROBLEM_NOT_FOUND));
 
         // 이미 푼 문제인지 확인
         if (userId != null && solvedProblemRepository.existsByUserIdAndProblemId(userId, problemId)) {
-            throw new IllegalStateException("이미 푼 문제입니다.");
+            throw new RestApiException(ErrorCode.PROBLEM_ALREADY_SOLVED);
         }
 
         return processAnswer(user, problem, null, userAnswer);
@@ -58,17 +57,17 @@ public class SolvingService {
      */
     public SolvedProblem submitAnswerInSession(Long sessionId, Long problemId, String userAnswer) {
         Session session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RestApiException(ErrorCode.SESSION_NOT_FOUND));
 
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RestApiException(ErrorCode.PROBLEM_NOT_FOUND));
 
         // 세션 내에서 이미 푼 문제인지 확인
         boolean alreadySolved = solvedProblemRepository.findBySessionId(sessionId).stream()
                 .anyMatch(sp -> sp.getProblem().getId().equals(problemId));
 
         if (alreadySolved) {
-            throw new IllegalStateException("이미 푼 문제입니다.");
+            throw new RestApiException(ErrorCode.PROBLEM_ALREADY_SOLVED);
         }
 
         SolvedProblem solvedProblem = processAnswer(session.getUser(), problem, session, userAnswer);
@@ -99,7 +98,7 @@ public class SolvingService {
 
         } else {
             // 단답형/서술형: Gemini API로 채점
-            GradingResultDto gradingResult = geminiApiService.gradeAnswer(problem, userAnswer);
+            var gradingResult = geminiApiService.gradeAnswer(problem, userAnswer);
             isCorrect = gradingResult.isCorrect();
             score = gradingResult.getScore();
             aiFeedback = gradingResult.getFeedback();
@@ -125,6 +124,6 @@ public class SolvingService {
     @Transactional(readOnly = true)
     public SolvedProblem getSolvedProblem(Long userId, Long problemId) {
         return solvedProblemRepository.findByUserIdAndProblemId(userId, problemId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.SOLVED_NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("풀이 기록을 찾을 수 없습니다."));
     }
 }
