@@ -38,6 +38,12 @@ springdoc:
     showCommonExtensions: true
   show-actuator: true
 
+app:
+  data:
+    init:
+      enabled: true  # 초기화 활성화 여부
+      file-path: data.json
+
 
 jwt:
   issuer: ajufresh@gmail.com

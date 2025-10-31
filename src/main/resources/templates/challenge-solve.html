@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>챌린지 풀이</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f5f5;
+            padding-bottom: 50px;
+        }
+        .challenge-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+        .timer.warning {
+            background: rgba(255,193,7,0.3);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .progress-tracker {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .progress-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        .progress-dot.current {
+            background: #ffc107;
+            transform: scale(1.2);
+        }
+        .progress-dot.correct {
+            background: #28a745;
+            color: white;
+        }
+        .progress-dot.incorrect {
+            background: #dc3545;
+            color: white;
+        }
+        .problem-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .problem-question {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }
+        .choice-option {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .choice-option:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .choice-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<!-- 챌린지 헤더 -->
+<div class="challenge-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">🏆 챌린지 모드</h4>
+                <small id="categoryInfo">Loading...</small>
+            </div>
+            <div class="timer" id="timer">--:--</div>
+        </div>
+        <div class="progress-tracker" id="progressTracker">
+            <!-- 진행도 점들이 동적으로 생성됨 -->
+        </div>
+    </div>
+</div>
+
+<!-- 문제 영역 -->
+<div class="problem-container">
+    <div class="mb-3">
+        <span class="badge bg-primary" id="problemNumber">문제 1</span>
+        <span class="badge bg-info" id="typeBadge">객관식</span>
+    </div>
+
+    <div class="problem-question" id="problemQuestion">
+        문제를 불러오는 중...
+    </div>
+
+    <div id="answerArea">
+        <!-- 답안 영역 -->
+    </div>
+
+    <button class="btn btn-primary btn-submit" onclick="submitAnswer()">
+        제출하기 →
+    </button>
+</div>
+
+<!-- 결과 모달 -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultTitle">결과</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="nextProblem()">다음 문제 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 완료 모달 -->
+<div class="modal fade" id="completeModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">🎉 챌린지 완료!</h5>
+            </div>
+            <div class="modal-body" id="completeBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.href='/'">메인으로</button>
+                <button type="button" class="btn btn-primary" onclick="location.href='/statistics'">통계 보기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/token.js"></script>
+<script>
+    let sessionId = null;
+    let session = null;
+    let problems = [];
+    let currentIndex = 0;
+    let selectedAnswer = '';
+    let results = [];
+    let timerInterval = null;
+    let remainingSeconds = 0;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    sessionId = urlParams.get('sessionId');
+
+    async function loadSession() {
+        try {
+            // 세션 정보 로드
+            const sessionResponse = await fetch(`/api/sessions/${sessionId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            session = await sessionResponse.json();
+
+            // 카테고리 정보 표시
+            document.getElementById('categoryInfo').textContent =
+                `${getCategoryName(session.category)} - ${getDifficultyName(session.difficulty)}`;
+
+            // 타이머 시작
+            if (session.timeLimitMinutes) {
+                remainingSeconds = session.timeLimitMinutes * 60;
+                startTimer();
+            }
+
+            // 문제 로드
+            const problemsResponse = await fetch(`/api/sessions/${sessionId}/problems`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            problems = await problemsResponse.json();
+
+            // 진행도 트래커 생성
+            createProgressTracker();
+
+            // 첫 문제 표시
+            displayProblem(0);
+
+        } catch (error) {
+            console.error('세션 로드 실패:', error);
+            alert('세션을 불러오는데 실패했습니다.');
+            location.href = '/challenge';
+        }
+    }
+
+    function startTimer() {
+        const timerElement = document.getElementById('timer');
+
+        timerInterval = setInterval(() => {
+            remainingSeconds--;
+
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // 3분 남았을 때 경고
+            if (remainingSeconds === 180) {
+                timerElement.classList.add('warning');
+            }
+
+            // 시간 종료
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                alert('시간이 종료되었습니다!');
+                completeChallenge();
+            }
+        }, 1000);
+    }
+
+    function createProgressTracker() {
+        const tracker = document.getElementById('progressTracker');
+        tracker.innerHTML = '';
+
+        problems.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'progress-dot';
+            dot.textContent = index + 1;
+            dot.id = `dot-${index}`;
+            tracker.appendChild(dot);
+        });
+
+        document.getElementById('dot-0').classList.add('current');
+    }
+
+    function displayProblem(index) {
+        currentIndex = index;
+        const problem = problems[index];
+        selectedAnswer = '';
+
+        // 문제 번호
+        document.getElementById('problemNumber').textContent = `문제 ${index + 1}/${problems.length}`;
+        document.getElementById('typeBadge').textContent = getTypeName(problem.problemType);
+
+        // 문제 내용
+        document.getElementById('problemQuestion').textContent = problem.question;
+
+        // 답안 영역
+        const answerArea = document.getElementById('answerArea');
+        answerArea.innerHTML = '';
+
+        if (problem.problemType === 'MULTIPLE_CHOICE' && problem.choices) {
+            problem.choices.forEach(choice => {
+                const div = document.createElement('div');
+                div.className = 'choice-option';
+                div.textContent = choice;
+                div.onclick = () => selectChoice(choice, div);
+                answerArea.appendChild(div);
+            });
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.className = 'answer-input';
+            textarea.rows = problem.problemType === 'DESCRIPTIVE' ? 8 : 3;
+            textarea.placeholder = '답안을 입력하세요...';
+            textarea.oninput = (e) => selectedAnswer = e.target.value;
+            answerArea.appendChild(textarea);
+        }
+
+        // 진행도 업데이트
+        updateProgressTracker();
+    }
+
+    function selectChoice(choice, element) {
+        document.querySelectorAll('.choice-option').forEach(el => {
+            el.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        selectedAnswer = choice;
+    }
+
+    function updateProgressTracker() {
+        document.querySelectorAll('.progress-dot').forEach(dot => {
+            dot.classList.remove('current');
+        });
+        document.getElementById(`dot-${currentIndex}`).classList.add('current');
+    }
+
+    async function submitAnswer() {
+        if (!selectedAnswer.trim()) {
+            alert('답안을 선택하거나 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/sessions/${sessionId}/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify({
+                    problemId: problems[currentIndex].id,
+                    userAnswer: selectedAnswer
+                })
+            });
+
+            const result = await response.json();
+            results.push(result);
+
+            // 진행도 점 색상 변경
+            const dot = document.getElementById(`dot-${currentIndex}`);
+            dot.classList.add(result.isCorrect ? 'correct' : 'incorrect');
+
+            showResult(result);
+
+        } catch (error) {
+            console.error('답안 제출 실패:', error);
+            alert('답안 제출에 실패했습니다.');
+        }
+    }
+
+    function showResult(result) {
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        const title = document.getElementById('resultTitle');
+        const body = document.getElementById('resultBody');
+
+        title.innerHTML = result.isCorrect ? '✅ 정답입니다!' : '❌ 오답입니다';
+        title.className = result.isCorrect ? 'modal-title text-success' : 'modal-title text-danger';
+
+        body.innerHTML = `
+                <div class="mb-3">
+                    <h6>점수</h6>
+                    <div class="progress">
+                        <div class="progress-bar ${result.isCorrect ? 'bg-success' : 'bg-danger'}"
+                             style="width: ${result.score}%">
+                            ${result.score}점
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6>AI 피드백</h6>
+                    <p class="text-muted" style="white-space: pre-wrap;">${result.aiFeedback}</p>
+                </div>
+            `;
+
+        modal.show();
+    }
+
+    function nextProblem() {
+        bootstrap.Modal.getInstance(document.getElementById('resultModal')).hide();
+
+        if (currentIndex + 1 < problems.length) {
+            displayProblem(currentIndex + 1);
+        } else {
+            completeChallenge();
+        }
+    }
+
+    async function completeChallenge() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+
+        try {
+            // 세션 완료 처리
+            await fetch(`/api/sessions/${sessionId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+
+            // 최종 결과 표시
+            const correctCount = results.filter(r => r.isCorrect).length;
+            const accuracy = (correctCount / results.length * 100).toFixed(1);
+
+            const completeBody = document.getElementById('completeBody');
+            completeBody.innerHTML = `
+                    <div class="text-center mb-4">
+                        <h3 class="mb-3">최종 점수</h3>
+                        <div style="font-size: 3rem; font-weight: bold; color: #667eea;">
+                            ${correctCount}/${results.length}
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-primary" style="font-size: 1.2rem;">정답률 ${accuracy}%</span>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col">
+                            <h5 class="text-success">${correctCount}</h5>
+                            <small>정답</small>
+                        </div>
+                        <div class="col">
+                            <h5 class="text-danger">${results.length - correctCount}</h5>
+                            <small>오답</small>
+                        </div>
+                    </div>
+                `;
+
+            const modal = new bootstrap.Modal(document.getElementById('completeModal'));
+            modal.show();
+
+        } catch (error) {
+            console.error('세션 완료 처리 실패:', error);
+        }
+    }
+
+    function getCategoryName(category) {
+        const names = {
+            'SPRING_CORE': 'Spring Core',
+            'SPRING_BOOT': 'Spring Boot',
+            'SPRING_MVC': 'Spring MVC',
+            'SPRING_DATA_JPA': 'Spring Data JPA',
+            'SPRING_SECURITY': 'Spring Security'
+        };
+        return names[category] || category;
+    }
+
+    function getDifficultyName(difficulty) {
+        const names = {
+            'BEGINNER': '초급',
+            'INTERMEDIATE': '중급',
+            'ADVANCED': '고급'
+        };
+        return names[difficulty] || difficulty;
+    }
+
+    function getTypeName(type) {
+        const names = {
+            'MULTIPLE_CHOICE': '객관식',
+            'SHORT_ANSWER': '단답형',
+            'DESCRIPTIVE': '서술형'
+        };
+        return names[type] || type;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadSession);
+
+    // 페이지 이탈 경고
+    window.addEventListener('beforeunload', function(e) {
+        if (currentIndex < problems.length - 1) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+</script>
+</body>
+</html>

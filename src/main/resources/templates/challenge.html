@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>챌린지 모드</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .challenge-container {
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .challenge-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .challenge-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .form-section {
+            margin-bottom: 30px;
+        }
+        .form-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .btn-start {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .option-card {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .option-card:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .option-card.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="challenge-container">
+    <div class="challenge-header">
+        <div class="challenge-icon">🏆</div>
+        <h2>챌린지 모드</h2>
+        <p class="text-muted">10개 문제를 연속으로 풀어보세요!</p>
+    </div>
+
+    <form id="challengeForm">
+        <!-- 카테고리 선택 -->
+        <div class="form-section">
+            <label class="form-label">📚 카테고리 선택</label>
+            <div id="categoryOptions">
+                <div class="option-card" data-value="SPRING_CORE">
+                    <strong>🔧 Spring Core</strong>
+                    <div><small class="text-muted">IoC, DI, AOP 등 핵심 개념</small></div>
+                </div>
+                <div class="option-card" data-value="SPRING_BOOT">
+                    <strong>🚀 Spring Boot</strong>
+                    <div><small class="text-muted">Auto Configuration, Actuator</small></div>
+                </div>
+                <div class="option-card" data-value="SPRING_MVC">
+                    <strong>🌐 Spring MVC</strong>
+                    <div><small class="text-muted">REST API, Controller</small></div>
+                </div>
+                <div class="option-card" data-value="SPRING_DATA_JPA">
+                    <strong>💾 Spring Data JPA</strong>
+                    <div><small class="text-muted">Repository, 영속성 컨텍스트</small></div>
+                </div>
+                <div class="option-card" data-value="SPRING_SECURITY">
+                    <strong>🔒 Spring Security</strong>
+                    <div><small class="text-muted">인증, 인가, JWT</small></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 난이도 선택 -->
+        <div class="form-section">
+            <label class="form-label">⚡ 난이도 선택</label>
+            <div id="difficultyOptions">
+                <div class="option-card" data-value="BEGINNER">
+                    <strong>🟢 초급</strong>
+                    <div><small class="text-muted">기본 개념 및 용어</small></div>
+                </div>
+                <div class="option-card" data-value="INTERMEDIATE">
+                    <strong>🟡 중급</strong>
+                    <div><small class="text-muted">실무 활용 및 응용</small></div>
+                </div>
+                <div class="option-card" data-value="ADVANCED">
+                    <strong>🔴 고급</strong>
+                    <div><small class="text-muted">심화 개념 및 최적화</small></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 문제 개수 -->
+        <div class="form-section">
+            <label class="form-label">📝 문제 개수</label>
+            <select class="form-select" id="totalQuestions">
+                <option value="5">5개 (빠른 체크)</option>
+                <option value="10" selected>10개 (추천)</option>
+                <option value="15">15개 (심화 학습)</option>
+                <option value="20">20개 (전체 학습)</option>
+            </select>
+        </div>
+
+        <!-- 시간 제한 -->
+        <div class="form-section">
+            <label class="form-label">⏱️ 시간 제한 (선택)</label>
+            <select class="form-select" id="timeLimit">
+                <option value="">제한 없음</option>
+                <option value="10">10분</option>
+                <option value="15">15분</option>
+                <option value="20">20분</option>
+                <option value="30">30분</option>
+            </select>
+        </div>
+
+        <!-- 시작 버튼 -->
+        <button type="button" class="btn btn-start" onclick="startChallenge()">
+            🚀 챌린지 시작하기
+        </button>
+
+        <button type="button" class="btn btn-outline-secondary w-100 mt-3" onclick="location.href='/'">
+            ← 메인으로
+        </button>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/token.js"></script>
+<script>
+    let selectedCategory = '';
+    let selectedDifficulty = '';
+
+    // 카테고리 선택 이벤트
+    document.querySelectorAll('#categoryOptions .option-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('#categoryOptions .option-card').forEach(c => {
+                c.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            selectedCategory = this.dataset.value;
+        });
+    });
+
+    // 난이도 선택 이벤트
+    document.querySelectorAll('#difficultyOptions .option-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('#difficultyOptions .option-card').forEach(c => {
+                c.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            selectedDifficulty = this.dataset.value;
+        });
+    });
+
+    async function startChallenge() {
+        if (!selectedCategory) {
+            alert('카테고리를 선택해주세요.');
+            return;
+        }
+        if (!selectedDifficulty) {
+            alert('난이도를 선택해주세요.');
+            return;
+        }
+
+        const totalQuestions = document.getElementById('totalQuestions').value;
+        const timeLimit = document.getElementById('timeLimit').value;
+        const userId = 1; // TODO: 실제 사용자 ID
+
+        try {
+            // 세션 생성
+            const response = await fetch(`/api/sessions?userId=${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify({
+                    category: selectedCategory,
+                    difficulty: selectedDifficulty,
+                    totalQuestions: parseInt(totalQuestions),
+                    timeLimitMinutes: timeLimit ? parseInt(timeLimit) : null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('세션 생성 실패');
+            }
+
+            const session = await response.json();
+
+            // 챌린지 풀이 화면으로 이동
+            location.href = `/challenge-solve?sessionId=${session.id}`;
+
+        } catch (error) {
+            console.error('챌린지 시작 실패:', error);
+            alert('챌린지를 시작하는데 실패했습니다. 다시 시도해주세요.');
+        }
+    }
+</script>
+</body>
+</html>

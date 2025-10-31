@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제 풀이</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f5f5;
+            padding-bottom: 50px;
+        }
+        .problem-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .problem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .problem-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .problem-meta {
+            display: flex;
+            gap: 10px;
+        }
+        .problem-question {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }
+        .choice-option {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .choice-option:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .choice-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        .answer-input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="problem-container">
+    <!-- 문제 헤더 -->
+    <div class="problem-header">
+        <div class="problem-number" id="problemNumber">문제 1/20</div>
+        <div class="problem-meta">
+            <span class="badge bg-primary" id="categoryBadge">Spring Core</span>
+            <span class="badge bg-warning" id="difficultyBadge">중급</span>
+            <span class="badge bg-info" id="typeBadge">객관식</span>
+        </div>
+    </div>
+
+    <!-- 문제 -->
+    <div class="problem-question" id="problemQuestion">
+        문제를 불러오는 중...
+    </div>
+
+    <!-- 답안 영역 -->
+    <div id="answerArea">
+        <!-- 객관식 또는 주관식 답안이 동적으로 생성됨 -->
+    </div>
+
+    <!-- 버튼 -->
+    <div class="navigation-buttons">
+        <button class="btn btn-outline-secondary" onclick="goBack()">
+            ← 뒤로가기
+        </button>
+        <button class="btn btn-primary btn-submit" onclick="submitAnswer()">
+            제출하기 →
+        </button>
+    </div>
+</div>
+
+<!-- 결과 모달 -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultTitle">결과</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultBody">
+                <!-- 결과 내용 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/token.js"></script>
+<script>
+    let currentProblem = null;
+    let problems = [];
+    let currentIndex = 0;
+    let selectedAnswer = '';
+
+    // URL 파라미터에서 카테고리, 난이도 가져오기
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    const difficulty = urlParams.get('difficulty');
+    const userId = 1; // TODO: 실제 사용자 ID
+
+    async function loadProblems() {
+        try {
+            const response = await fetch(`/api/problems?category=${category}&difficulty=${difficulty}&userId=${userId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            problems = await response.json();
+            displayProblem(0);
+        } catch (error) {
+            console.error('문제 로드 실패:', error);
+            alert('문제를 불러오는데 실패했습니다.');
+        }
+    }
+
+    function displayProblem(index) {
+        if (index >= problems.length) {
+            alert('모든 문제를 풀었습니다!');
+            location.href = '/statistics';
+            return;
+        }
+
+        currentIndex = index;
+        currentProblem = problems[index];
+        selectedAnswer = '';
+
+        // 헤더 업데이트
+        document.getElementById('problemNumber').textContent = `문제 ${index + 1}/${problems.length}`;
+        document.getElementById('categoryBadge').textContent = getCategoryName(currentProblem.category);
+        document.getElementById('difficultyBadge').textContent = getDifficultyName(currentProblem.difficulty);
+        document.getElementById('typeBadge').textContent = getTypeName(currentProblem.problemType);
+
+        // 문제 표시
+        document.getElementById('problemQuestion').textContent = currentProblem.question;
+
+        // 답안 영역 생성
+        const answerArea = document.getElementById('answerArea');
+        answerArea.innerHTML = '';
+
+        if (currentProblem.problemType === 'MULTIPLE_CHOICE' && currentProblem.choices) {
+            // 객관식
+            currentProblem.choices.forEach((choice, i) => {
+                const choiceDiv = document.createElement('div');
+                choiceDiv.className = 'choice-option';
+                choiceDiv.textContent = choice;
+                choiceDiv.onclick = () => selectChoice(choice, choiceDiv);
+                answerArea.appendChild(choiceDiv);
+            });
+        } else {
+            // 주관식
+            const textarea = document.createElement('textarea');
+            textarea.className = 'answer-input';
+            textarea.rows = currentProblem.problemType === 'DESCRIPTIVE' ? 8 : 3;
+            textarea.placeholder = '답안을 입력하세요...';
+            textarea.oninput = (e) => selectedAnswer = e.target.value;
+            answerArea.appendChild(textarea);
+        }
+    }
+
+    function selectChoice(choice, element) {
+        // 이전 선택 해제
+        document.querySelectorAll('.choice-option').forEach(el => {
+            el.classList.remove('selected');
+        });
+        // 현재 선택
+        element.classList.add('selected');
+        selectedAnswer = choice;
+    }
+
+    async function submitAnswer() {
+        if (!selectedAnswer.trim()) {
+            alert('답안을 선택하거나 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/problems/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify({
+                    problemId: currentProblem.id,
+                    userAnswer: selectedAnswer
+                })
+            });
+
+            const result = await response.json();
+            showResult(result);
+        } catch (error) {
+            console.error('답안 제출 실패:', error);
+            alert('답안 제출에 실패했습니다.');
+        }
+    }
+
+    function showResult(result) {
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        const title = document.getElementById('resultTitle');
+        const body = document.getElementById('resultBody');
+
+        if (result.isCorrect) {
+            title.innerHTML = '✅ 정답입니다!';
+            title.className = 'modal-title text-success';
+        } else {
+            title.innerHTML = '❌ 오답입니다';
+            title.className = 'modal-title text-danger';
+        }
+
+        body.innerHTML = `
+                <div class="mb-3">
+                    <h6>점수</h6>
+                    <div class="progress">
+                        <div class="progress-bar ${result.isCorrect ? 'bg-success' : 'bg-danger'}"
+                             style="width: ${result.score}%">
+                            ${result.score}점
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6>AI 피드백</h6>
+                    <p class="text-muted" style="white-space: pre-wrap;">${result.aiFeedback}</p>
+                </div>
+                ${currentProblem.explanation ? `
+                <div>
+                    <h6>해설</h6>
+                    <p class="text-muted">${currentProblem.explanation}</p>
+                </div>
+                ` : ''}
+            `;
+
+        modal.show();
+    }
+
+    function nextProblem() {
+        bootstrap.Modal.getInstance(document.getElementById('resultModal')).hide();
+        displayProblem(currentIndex + 1);
+    }
+
+    function goBack() {
+        if (confirm('이전 화면으로 돌아가시겠습니까?')) {
+            history.back();
+        }
+    }
+
+    function getCategoryName(category) {
+        const names = {
+            'SPRING_CORE': 'Spring Core',
+            'SPRING_BOOT': 'Spring Boot',
+            'SPRING_MVC': 'Spring MVC',
+            'SPRING_DATA_JPA': 'Spring Data JPA',
+            'SPRING_SECURITY': 'Spring Security'
+        };
+        return names[category] || category;
+    }
+
+    function getDifficultyName(difficulty) {
+        const names = {
+            'BEGINNER': '초급',
+            'INTERMEDIATE': '중급',
+            'ADVANCED': '고급'
+        };
+        return names[difficulty] || difficulty;
+    }
+
+    function getTypeName(type) {
+        const names = {
+            'MULTIPLE_CHOICE': '객관식',
+            'SHORT_ANSWER': '단답형',
+            'DESCRIPTIVE': '서술형'
+        };
+        return names[type] || type;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadProblems);
+</script>
+</body>
+</html>

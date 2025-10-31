@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 통계</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f5f5;
+            padding: 30px 0;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .category-progress {
+            margin-bottom: 20px;
+        }
+        .weak-point-item {
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .accuracy-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 헤더 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 학습 통계</h2>
+        <button class="btn btn-outline-secondary" onclick="location.href='/'">← 메인으로</button>
+    </div>
+
+    <!-- 전체 통계 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stat-number" id="totalProblems">0</div>
+                <div class="stat-label">전체 문제</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stat-number text-success" id="solvedProblems">0</div>
+                <div class="stat-label">푼 문제</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stat-number text-primary" id="correctCount">0</div>
+                <div class="stat-label">정답</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stat-number text-warning" id="accuracy">0%</div>
+                <div class="stat-label">정답률</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리별 통계 -->
+    <div class="stats-card">
+        <h5 class="mb-4">📚 카테고리별 진행도</h5>
+        <div id="categoryStats">
+            <!-- 카테고리별 통계가 동적으로 추가됨 -->
+        </div>
+    </div>
+
+    <!-- 취약점 분석 -->
+    <div class="stats-card">
+        <h5 class="mb-4">⚠️ 취약점 분석</h5>
+        <p class="text-muted">정답률이 낮은 카테고리와 난이도입니다</p>
+        <div id="weakPoints">
+            <!-- 취약점이 동적으로 추가됨 -->
+        </div>
+    </div>
+
+    <!-- 오답 노트 -->
+    <div class="stats-card">
+        <h5 class="mb-4">📝 오답 노트</h5>
+        <div id="wrongAnswers">
+            <p class="text-muted">틀린 문제가 없습니다</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/token.js"></script>
+<script>
+    const userId = 1; // TODO: 실제 사용자 ID
+
+    async function loadStatistics() {
+        try {
+            // 전체 통계
+            const overallResponse = await fetch(`/api/stats/user/${userId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            const overall = await overallResponse.json();
+            displayOverallStats(overall);
+
+            // 카테고리별 통계
+            const categoryResponse = await fetch(`/api/stats/user/${userId}/category`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            const categories = await categoryResponse.json();
+            displayCategoryStats(categories);
+
+            // 취약점 분석
+            const weakResponse = await fetch(`/api/stats/user/${userId}/weak-points`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            const weakPoints = await weakResponse.json();
+            displayWeakPoints(weakPoints);
+
+            // 오답 노트
+            const wrongResponse = await fetch(`/api/stats/user/${userId}/wrong-answers`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            const wrongAnswers = await wrongResponse.json();
+            displayWrongAnswers(wrongAnswers);
+
+        } catch (error) {
+            console.error('통계 로드 실패:', error);
+        }
+    }
+
+    function displayOverallStats(stats) {
+        document.getElementById('totalProblems').textContent = stats.totalProblems;
+        document.getElementById('solvedProblems').textContent = stats.solvedProblems;
+        document.getElementById('correctCount').textContent = stats.correctCount;
+        document.getElementById('accuracy').textContent = stats.accuracy + '%';
+    }
+
+    function displayCategoryStats(categories) {
+        const container = document.getElementById('categoryStats');
+        container.innerHTML = '';
+
+        categories.forEach(cat => {
+            const progressPercent = (cat.solvedProblems / cat.totalProblems) * 100;
+            const accuracyClass = cat.accuracy >= 80 ? 'success' : cat.accuracy >= 60 ? 'warning' : 'danger';
+
+            const div = document.createElement('div');
+            div.className = 'category-progress';
+            div.innerHTML = `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><strong>${getCategoryName(cat.category)}</strong></span>
+                        <span>${cat.solvedProblems}/${cat.totalProblems}
+                            <span class="badge bg-${accuracyClass}">${cat.accuracy}%</span>
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-${accuracyClass}"
+                             style="width: ${progressPercent}%"></div>
+                    </div>
+                `;
+            container.appendChild(div);
+        });
+    }
+
+    function displayWeakPoints(weakPoints) {
+        const container = document.getElementById('weakPoints');
+
+        if (weakPoints.length === 0) {
+            container.innerHTML = '<p class="text-muted">취약점이 없습니다! 잘하고 계십니다 🎉</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        weakPoints.slice(0, 5).forEach(wp => {
+            const div = document.createElement('div');
+            div.className = 'weak-point-item';
+            div.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <span>
+                            <strong>${getCategoryName(wp.category)}</strong> - ${getDifficultyName(wp.difficulty)}
+                        </span>
+                        <span class="accuracy-badge bg-warning text-dark">
+                            ${wp.accuracy}%
+                        </span>
+                    </div>
+                    <small class="text-muted">${wp.solvedCount}개 문제 중 ${wp.correctCount}개 정답</small>
+                `;
+            container.appendChild(div);
+        });
+    }
+
+    function displayWrongAnswers(wrongAnswers) {
+        const container = document.getElementById('wrongAnswers');
+
+        if (wrongAnswers.length === 0) {
+            container.innerHTML = '<p class="text-muted">틀린 문제가 없습니다! 완벽합니다 🎉</p>';
+            return;
+        }
+
+        container.innerHTML = `<p class="text-muted mb-3">총 ${wrongAnswers.length}개의 오답</p>`;
+
+        wrongAnswers.slice(0, 10).forEach(wa => {
+            const div = document.createElement('div');
+            div.className = 'mb-2 p-2 border-start border-3 border-danger';
+            div.innerHTML = `
+                    <small class="text-muted">문제 #${wa.problemId}</small>
+                    <div><strong>내 답안:</strong> ${wa.userAnswer}</div>
+                    <small class="text-danger">점수: ${wa.score}점</small>
+                `;
+            container.appendChild(div);
+        });
+    }
+
+    function getCategoryName(category) {
+        const names = {
+            'SPRING_CORE': 'Spring Core',
+            'SPRING_BOOT': 'Spring Boot',
+            'SPRING_MVC': 'Spring MVC',
+            'SPRING_DATA_JPA': 'Spring Data JPA',
+            'SPRING_SECURITY': 'Spring Security'
+        };
+        return names[category] || category;
+    }
+
+    function getDifficultyName(difficulty) {
+        const names = {
+            'BEGINNER': '초급',
+            'INTERMEDIATE': '중급',
+            'ADVANCED': '고급'
+        };
+        return names[difficulty] || difficulty;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStatistics);
+</script>
+</body>
+</html>
