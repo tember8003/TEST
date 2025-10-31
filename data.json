@@ -1,0 +1,536 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "다음 중 Spring Framework의 주요 특징이 아닌 것은 무엇입니까?",
+      "choices": [
+        "의존성 주입(Dependency Injection)",
+        "관점 지향 프로그래밍(AOP)",
+        "서블릿 컨테이너 제공",
+        "POJO 기반 개발"
+      ],
+      "answer": "서블릿 컨테이너 제공",
+      "explanation": "Spring은 자체적으로 서블릿 컨테이너를 제공하지 않습니다. 대신 Tomcat, Jetty 등 외부 컨테이너와 함께 사용합니다."
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "category": "Spring Boot",
+      "difficulty": "beginner",
+      "question": "Spring Boot의 주요 장점으로 올바른 것은 무엇입니까?",
+      "choices": [
+        "XML 기반 설정 의무화",
+        "자동 설정(Auto Configuration)",
+        "서버를 수동으로 배포해야 함",
+        "코드 컴파일 없이 설정 변경 가능"
+      ],
+      "answer": "자동 설정(Auto Configuration)",
+      "explanation": "Spring Boot는 자동 설정 기능을 통해 개발자가 설정을 최소화하고 빠르게 애플리케이션을 실행할 수 있게 합니다."
+    },
+    {
+      "id": 3,
+      "type": "short_answer",
+      "category": "Spring MVC",
+      "difficulty": "beginner",
+      "question": "@Controller와 @RestController의 차이를 간단히 설명하세요.",
+      "answer": "@RestController는 @Controller와 @ResponseBody를 결합한 것으로, 반환값이 View가 아닌 HTTP Response Body로 직렬화됩니다.",
+      "explanation": "@Controller는 주로 View를 반환하지만, @RestController는 JSON 또는 XML 응답을 기본으로 합니다."
+    },
+    {
+      "id": 4,
+      "type": "multiple_choice",
+      "category": "Spring Data JPA",
+      "difficulty": "beginner",
+      "question": "다음 중 Spring Data JPA에서 Repository 인터페이스를 정의할 때 반드시 상속해야 하는 인터페이스는 무엇입니까?",
+      "choices": [
+        "JpaRepository",
+        "CrudRepository",
+        "PagingAndSortingRepository",
+        "EntityManager"
+      ],
+      "answer": "CrudRepository",
+      "explanation": "JpaRepository와 PagingAndSortingRepository는 CrudRepository를 상속하지만, 최소한 CrudRepository를 상속해야 기본 CRUD 기능을 사용할 수 있습니다."
+    },
+    {
+      "id": 5,
+      "type": "short_answer",
+      "category": "Spring Security",
+      "difficulty": "beginner",
+      "question": "Spring Security에서 인증(Authentication)과 인가(Authorization)의 차이를 설명하세요.",
+      "answer": "인증은 사용자의 신원을 확인하는 과정이고, 인가는 인증된 사용자가 접근할 수 있는 리소스를 제한하는 과정입니다.",
+      "explanation": "Authentication은 ‘누구인지’ 확인하고, Authorization은 ‘무엇을 할 수 있는지’를 결정합니다."
+    },
+    {
+      "id": 6,
+      "type": "multiple_choice",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "다음 중 Spring Boot의 `application.properties` 파일에서 서버 포트를 8081로 변경하는 올바른 설정은 무엇입니까?",
+      "choices": [
+        "server_port=8081",
+        "server.port=8081",
+        "port.server=8081",
+        "spring.server.port=8081"
+      ],
+      "answer": "server.port=8081",
+      "explanation": "Spring Boot에서 서버 포트를 지정할 때는 `server.port` 속성을 사용해야 합니다."
+    },
+    {
+      "id": 7,
+      "type": "short_answer",
+      "category": "Spring Core",
+      "difficulty": "intermediate",
+      "question": "Spring Bean의 기본 스코프(scope)는 무엇입니까?",
+      "answer": "singleton",
+      "explanation": "Spring에서 Bean은 기본적으로 Singleton 스코프로 관리되어, 하나의 인스턴스만 생성됩니다."
+    },
+    {
+      "id": 8,
+      "type": "multiple_choice",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "다음 코드 실행 결과로 올바른 것은 무엇입니까?\n\n```java\n@Repository\npublic interface UserRepository extends JpaRepository<User, Long> {\n \tOptional<User> findByEmail(String email);\n}\n```\n",
+      "choices": [
+        "User 엔티티의 email 컬럼을 기준으로 조회하는 쿼리가 자동 생성된다.",
+        "User 엔티티에 명시적으로 쿼리를 작성해야 한다.",
+        "엔티티 이름이 email이 아니므로 오류가 발생한다.",
+        "email 컬럼이 nullable이면 실행되지 않는다."
+      ],
+      "answer": "User 엔티티의 email 컬럼을 기준으로 조회하는 쿼리가 자동 생성된다.",
+      "explanation": "Spring Data JPA는 메서드 이름 기반으로 쿼리를 자동 생성합니다."
+    },
+    {
+      "id": 9,
+      "type": "descriptive",
+      "category": "Spring MVC",
+      "difficulty": "intermediate",
+      "question": "DispatcherServlet의 역할을 서술하세요.",
+      "answer": "DispatcherServlet은 클라이언트 요청을 받아 적절한 Controller에 전달하고, 처리 결과를 View에 전달하는 중앙 프론트 컨트롤러 역할을 합니다.",
+      "explanation": "Spring MVC의 핵심 컴포넌트로 요청 분배와 응답 처리를 담당합니다."
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "category": "Spring Security",
+      "difficulty": "intermediate",
+      "question": "다음 코드의 결과로 올바른 것은 무엇입니까?\n\n```java\nhttp\n \t.csrf().disable()\n \t.authorizeRequests()\n \t.requestMatchers(\"/admin/**\").hasRole(\"ADMIN\")\n \t.anyRequest().authenticated();\n```\n",
+      "choices": [
+        "/admin/** 경로는 ADMIN 권한이 있어야 접근 가능하다.",
+        "모든 요청이 인증 없이 접근 가능하다.",
+        "CSRF 보호가 활성화되어 있다.",
+        "ADMIN 권한이 없어도 접근 가능하다."
+      ],
+      "answer": "/admin/** 경로는 ADMIN 권한이 있어야 접근 가능하다.",
+      "explanation": "hasRole(\"ADMIN\")으로 지정된 경로는 해당 권한이 있어야 접근할 수 있습니다."
+    },
+    {
+      "id": 11,
+      "type": "short_answer",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "Spring Boot에서 `@SpringBootApplication`은 어떤 3개의 애노테이션을 포함합니까?",
+      "answer": "@Configuration, @EnableAutoConfiguration, @ComponentScan",
+      "explanation": "이 세 애노테이션이 결합되어 Spring Boot 애플리케이션의 자동 설정과 컴포넌트 스캔을 활성화합니다."
+    },
+    {
+      "id": 12,
+      "type": "multiple_choice",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "다음 중 Lazy Loading이 발생하는 시점으로 올바른 것은 무엇입니까?",
+      "choices": [
+        "엔티티가 로드될 때 즉시 발생",
+        "연관된 엔티티를 실제로 접근할 때",
+        "쿼리 실행 전",
+        "트랜잭션 종료 후"
+      ],
+      "answer": "연관된 엔티티를 실제로 접근할 때",
+      "explanation": "Lazy Loading은 실제로 데이터가 필요할 때 프록시 객체를 통해 데이터를 로드합니다."
+    },
+    {
+      "id": 13,
+      "type": "descriptive",
+      "category": "Spring Security",
+      "difficulty": "advanced",
+      "question": "Spring Security의 필터 체인(Filter Chain)이 동작하는 순서와 주요 필터들의 역할을 설명하세요.",
+      "answer": "Spring Security는 여러 필터로 구성된 체인을 통해 요청을 처리하며, 예를 들어 UsernamePasswordAuthenticationFilter는 로그인 요청을 처리하고, SecurityContextPersistenceFilter는 SecurityContext를 복원합니다.",
+      "explanation": "요청은 Security Filter Chain을 따라 이동하며 각 필터가 인증과 인가를 처리합니다."
+    },
+    {
+      "id": 14,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "advanced",
+      "question": "Spring의 Bean 생명주기에서 `@PostConstruct`가 호출되는 시점은?",
+      "choices": [
+        "Bean이 생성되기 전",
+        "의존성 주입이 완료된 직후",
+        "Bean이 소멸되기 직전",
+        "ApplicationContext가 닫힌 후"
+      ],
+      "answer": "의존성 주입이 완료된 직후",
+      "explanation": "의존성 주입이 끝난 후 초기화 로직을 수행할 때 @PostConstruct 메서드가 호출됩니다."
+    },
+    {
+      "id": 15,
+      "type": "descriptive",
+      "category": "Spring Boot",
+      "difficulty": "advanced",
+      "question": "Spring Boot의 AutoConfiguration이 동작하는 원리를 설명하세요.",
+      "answer": "Spring Boot는 `spring.factories` 파일에 등록된 자동 설정 클래스를 기반으로, 클래스패스에 존재하는 Bean과 조건 애노테이션을 검사하여 필요한 설정만 자동 적용합니다.",
+      "explanation": "조건부 애노테이션(`@ConditionalOnClass`, `@ConditionalOnMissingBean` 등)을 통해 유연한 설정이 가능합니다."
+    },
+    {
+      "id": 16,
+      "type": "multiple_choice",
+      "category": "Spring MVC",
+      "difficulty": "intermediate",
+      "question": "다음 코드의 결과는 무엇입니까?\n\n```java\n@GetMapping(\"/hello\")\npublic String hello(Model model) {\n \tmodel.addAttribute(\"name\", \"Spring\");\n \treturn \"hello\";\n}\n```\n",
+      "choices": [
+        "뷰 이름이 'hello'인 템플릿이 렌더링되고 name=Spring이 전달된다.",
+        "JSON 형태로 {\"name\": \"Spring\"}이 반환된다.",
+        "404 오류가 발생한다.",
+        "빈 모델 객체가 반환된다."
+      ],
+      "answer": "뷰 이름이 'hello'인 템플릿이 렌더링되고 name=Spring이 전달된다.",
+      "explanation": "일반 @Controller에서는 ViewResolver가 뷰를 찾아 렌더링합니다."
+    },
+    {
+      "id": 17,
+      "type": "short_answer",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "@Transactional 애노테이션의 주요 역할은 무엇입니까?",
+      "answer": "메서드나 클래스의 트랜잭션 범위를 선언하여, 예외 발생 시 자동으로 롤백되도록 관리합니다.",
+      "explanation": "트랜잭션 경계를 명확히 지정해 일관성 있는 데이터 처리를 보장합니다."
+    },
+    {
+      "id": 18,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "다음 중 의존성 주입(Dependency Injection)의 장점으로 옳지 않은 것은?",
+      "choices": [
+        "객체 간 결합도 감소",
+        "유지보수성 향상",
+        "테스트 용이성 증가",
+        "코드 복잡도 증가"
+      ],
+      "answer": "코드 복잡도 증가",
+      "explanation": "DI는 복잡도를 줄이고 모듈 간 결합을 낮춰 관리와 테스트를 용이하게 합니다."
+    },
+    {
+      "id": 19,
+      "type": "descriptive",
+      "category": "Spring Security",
+      "difficulty": "advanced",
+      "question": "JWT 기반 인증을 Spring Security와 함께 사용하는 방식과 장점을 설명하세요.",
+      "answer": "JWT를 사용하면 세션 없이 인증 정보를 토큰으로 클라이언트에 저장하고, 매 요청 시 토큰을 검증하여 인증을 수행합니다. 서버 확장성과 성능이 향상됩니다.",
+      "explanation": "Stateless 인증 구조로 서버 부하를 줄이고, 마이크로서비스 환경에 적합합니다."
+    },
+    {
+      "id": 20,
+      "type": "multiple_choice",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "다음 중 Spring Boot의 Actuator에서 제공하는 기능이 아닌 것은 무엇입니까?",
+      "choices": [
+        "애플리케이션 상태 모니터링",
+        "헬스 체크 API 제공",
+        "애플리케이션 로그 분석 자동화",
+        "환경 정보 노출"
+      ],
+      "answer": "애플리케이션 로그 분석 자동화",
+      "explanation": "Actuator는 헬스, 메트릭, 환경 등의 엔드포인트를 제공하지만 로그 분석 기능은 직접 포함하지 않습니다."
+    },
+    {
+      "id": 21,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "Spring Framework에서 IoC(Inversion of Control)의 의미로 가장 적절한 것은?",
+      "choices": [
+        "객체의 생성과 의존성 관리를 개발자가 직접 제어한다",
+        "객체의 생성과 의존성 관리를 Spring Container가 제어한다",
+        "프로그램의 흐름을 역순으로 실행한다",
+        "인터페이스를 구현체로 변환하는 과정이다"
+      ],
+      "answer": "객체의 생성과 의존성 관리를 Spring Container가 제어한다",
+      "explanation": "IoC는 제어의 역전을 의미하며, 객체의 생성과 생명주기 관리를 개발자가 아닌 Spring Container가 담당합니다."
+    },
+    {
+      "id": 22,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "intermediate",
+      "question": "다음 코드에서 발생하는 문제는 무엇인가?\n\n```java\n@Component\npublic class UserService {\n \t@Autowired\n \tprivate UserRepository userRepository;\n \t\n \tpublic UserService() {\n \t\tuserRepository.findAll(); // 호출\n \t}\n}\n```",
+      "choices": [
+        "문제없이 정상 작동한다",
+        "생성자 시점에 userRepository가 아직 주입되지 않아 NullPointerException 발생",
+        "컴파일 에러가 발생한다",
+        "userRepository가 두 번 주입된다"
+      ],
+      "answer": "생성자 시점에 userRepository가 아직 주입되지 않아 NullPointerException 발생",
+      "explanation": "필드 주입(@Autowired)은 객체 생성 후에 이루어지므로, 생성자에서는 아직 null입니다. 생성자에서 의존성을 사용하려면 생성자 주입을 사용해야 합니다."
+    },
+    {
+      "id": 23,
+      "type": "short_answer",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "@Component, @Service, @Repository, @Controller는 모두 Spring Bean으로 등록하는 어노테이션입니다. 이들의 공통 부모 어노테이션은 무엇인가요?",
+      "answer": "@Component",
+      "explanation": "@Service, @Repository, @Controller는 모두 @Component를 메타 어노테이션으로 가지고 있으며, 역할을 명확히 하기 위한 특수화된 @Component입니다."
+    },
+    {
+      "id": 24,
+      "type": "descriptive",
+      "category": "Spring Data JPA",
+      "difficulty": "advanced",
+      "question": "다음 코드에서 N+1 문제가 발생합니다. 이 문제를 해결하는 방법을 설명하고, 해결된 코드를 작성하세요.\n\n```java\n@Entity\npublic class Team {\n \t@Id @GeneratedValue\n \tprivate Long id;\n \t\n \t@OneToMany(mappedBy = \"team\")\n \tprivate List<Member> members;\n}\n\n@Entity\npublic class Member {\n \t@Id @GeneratedValue\n \tprivate Long id;\n \t\n \t@ManyToOne\n \tprivate Team team;\n}\n\n// 사용 코드\nList<Team> teams = teamRepository.findAll();\nfor(Team team : teams) {\n \tSystem.out.println(team.getMembers().size());\n}\n```",
+      "answer": "Fetch Join을 사용하여 해결합니다.\n\n```java\npublic interface TeamRepository extends JpaRepository<Team, Long> {\n \t@Query(\"SELECT t FROM Team t JOIN FETCH t.members\")\n \tList<Team> findAllWithMembers();\n}\n```\n\n또는 @EntityGraph를 사용할 수 있습니다:\n\n```java\npublic interface TeamRepository extends JpaRepository<Team, Long> {\n \t@EntityGraph(attributePaths = {\"members\"})\n \tList<Team> findAll();\n}\n```",
+      "explanation": "N+1 문제는 Team 조회 1번 + 각 Team의 Member 조회 N번 발생하는 문제입니다. Fetch Join이나 @EntityGraph를 사용하면 한 번의 쿼리로 Team과 Member를 함께 조회할 수 있습니다."
+    },
+    {
+      "id": 25,
+      "type": "short_answer",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "application.yml에서 다음과 같이 설정했을 때, 프로파일이 'dev'일 경우 어떤 포트로 서버가 실행되나요?\n\n```yaml\nserver:\n \tport: 8080\n\n---\nspring:\n \tconfig:\n \t \tactivate:\n \t \t \ton-profile: dev\nserver:\n \tport: 9090\n```",
+      "answer": "9090",
+      "explanation": "Spring Boot는 활성화된 프로파일에 맞는 설정을 우선 적용합니다. dev 프로파일이 활성화되면 9090 포트가 사용됩니다."
+    },
+    {
+      "id": 26,
+      "type": "multiple_choice",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "JPA에서 `EntityManager.persist(entity)`를 호출했을 때 데이터베이스에 즉시 INSERT 쿼리가 발생하는 경우는 언제입니까?",
+      "choices": [
+        "트랜잭션이 시작될 때",
+        "트랜잭션이 커밋될 때",
+        "EntityManger.flush()를 명시적으로 호출했을 때",
+        "항상 즉시 발생한다"
+      ],
+      "answer": "EntityManger.flush()를 명시적으로 호출했을 때",
+      "explanation": "persist()는 영속성 컨텍스트에 엔티티를 저장할 뿐, 쿼리는 트랜잭션 커밋 시 플러시되면서 발생합니다. 다만, `flush()`를 명시적으로 호출하거나, JPQL 쿼리가 실행될 때 플러시가 발생할 수 있습니다."
+    },
+    {
+      "id": 27,
+      "type": "short_answer",
+      "category": "Spring Core",
+      "difficulty": "intermediate",
+      "question": "Spring AOP에서 **프록시(Proxy)**를 생성하는 두 가지 주요 방법은 무엇입니까?",
+      "answer": "JDK 동적 프록시 (Dynamic Proxy)와 CGLIB (Code Generation Library)",
+      "explanation": "JDK 동적 프록시는 인터페이스 기반 AOP를 구현하고, CGLIB는 구체 클래스 기반 AOP를 구현합니다. Spring Boot 2.0+에서는 기본적으로 CGLIB를 사용합니다."
+    },
+    {
+      "id": 28,
+      "type": "multiple_choice",
+      "category": "Spring MVC",
+      "difficulty": "beginner",
+      "question": "클라이언트가 HTTP POST 요청으로 JSON 데이터를 전송할 때, Spring MVC Controller에서 이를 객체로 받기 위해 사용하는 주요 애노테이션은 무엇입니까?",
+      "choices": [
+        "`@RequestParam`",
+        "`@PathVariable`",
+        "`@ModelAttribute`",
+        "`@RequestBody`"
+      ],
+      "answer": "`@RequestBody`",
+      "explanation": "@RequestBody는 HTTP 요청 본문(JSON, XML 등)의 내용을 자바 객체로 변환(역직렬화)하는 데 사용됩니다."
+    },
+    {
+      "id": 29,
+      "type": "descriptive",
+      "category": "Spring Security",
+      "difficulty": "advanced",
+      "question": "Spring Security에서 **`SecurityContextHolder`**의 역할과 저장 방식에 대해 설명하세요.",
+      "answer": "`SecurityContextHolder`는 현재 스레드의 보안 주체(인증된 사용자 정보)인 `SecurityContext`를 저장하고 제공하는 중앙 허브입니다. 기본적으로 **`ThreadLocal`**에 저장되어 동일한 요청 내의 모든 스레드에서 접근 가능하게 하여, 요청 처리 중 사용자의 인증 정보를 유지합니다.",
+      "explanation": "인증이 완료되면 `Authentication` 객체를 포함한 `SecurityContext`가 여기에 저장되며, 요청이 끝나면 정리됩니다. `ThreadLocal`을 사용해 각 요청이 독립적인 보안 컨텍스트를 갖게 합니다."
+    },
+    {
+      "id": 30,
+      "type": "multiple_choice",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "Spring Boot에서 환경 설정을 위한 우선순위가 **가장 높은** 소스는 무엇입니까?",
+      "choices": [
+        "`application.properties` 또는 `application.yml`",
+        "시스템 환경 변수 (Environment Variables)",
+        "명령줄 인수 (Command Line Arguments)",
+        "`@PropertySource`를 통해 로드된 파일"
+      ],
+      "answer": "명령줄 인수 (Command Line Arguments)",
+      "explanation": "Spring Boot는 외부 설정의 우선순위를 정하며, 일반적으로 명령줄 인수가 환경 변수나 설정 파일보다 우선순위가 높습니다."
+    },
+    {
+      "id": 31,
+      "type": "short_answer",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "DI (의존성 주입)를 구현하는 세 가지 방법(생성자, 필드, 메서드) 중, **불변성**과 **테스트 용이성**을 확보할 수 있어 가장 권장되는 방식은 무엇입니까?",
+      "answer": "생성자 주입 (Constructor Injection)",
+      "explanation": "생성자 주입은 객체 생성 시점에 의존성이 주입됨을 보장하며, `final` 키워드를 사용하여 불변성을 유지하고 순환 참조를 방지할 수 있습니다."
+    },
+    {
+      "id": 32,
+      "type": "multiple_choice",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "다음 JPQL 쿼리 작성 시, 발생하는 오류는 무엇입니까?\n\n```java\n@Query(\"SELECT u.name, u.email FROM User u\")\nList<User> findNameAndEmail();\n```",
+      "choices": [
+        "JPQL 문법 오류",
+        "리턴 타입 오류",
+        "쿼리 메서드 이름 오류",
+        "User 엔티티에 `@Id`가 없어서 발생하는 오류"
+      ],
+      "answer": "리턴 타입 오류",
+      "explanation": "JPQL에서 특정 필드만 선택(Projection)하여 반환할 경우, 엔티티 타입(`User`)으로 직접 받을 수 없고, DTO 또는 `Object[]`, `List<String>` 등 해당 필드에 맞는 타입으로 받아야 합니다."
+    },
+    {
+      "id": 33,
+      "type": "descriptive",
+      "category": "Spring MVC",
+      "difficulty": "advanced",
+      "question": "Spring MVC에서 **Interceptor(인터셉터)**와 **Filter(필터)**의 차이점을 설명하세요.",
+      "answer": "Filter는 Servlet 스펙에 정의되어 DispatcherServlet 이전에 요청을 처리하고, 주로 인코딩, 보안(XSS) 등 **공통적이고 전역적인** 처리에 사용됩니다. Interceptor는 Spring Framework의 기능으로 DispatcherServlet 이후에 호출되며, 주로 인증/인가, 로깅, **Controller 실행 전후의 비즈니스 로직** 처리에 사용됩니다.",
+      "explanation": "필터는 서블릿 컨테이너 레벨에서, 인터셉터는 Spring 컨텍스트 레벨에서 동작합니다. 인터셉터는 빈(Bean) 주입을 받을 수 있다는 장점이 있습니다."
+    },
+    {
+      "id": 34,
+      "type": "multiple_choice",
+      "category": "Spring Security",
+      "difficulty": "intermediate",
+      "question": "Spring Security에서 사용자 인증 정보를 저장하는 기본 클래스는 무엇입니까?",
+      "choices": [
+        "`UserDetails`",
+        "`Authentication`",
+        "`GrantedAuthority`",
+        "`Principal`"
+      ],
+      "answer": "`Authentication`",
+      "explanation": "`Authentication` 객체는 현재 인증된 사용자의 정보(`Principal`, 자격 증명, 권한 목록)를 담고 있습니다. `UserDetails`는 `Authentication` 객체를 생성하는 데 사용되는 사용자 정보를 나타내는 인터페이스입니다."
+    },
+    {
+      "id": 35,
+      "type": "short_answer",
+      "category": "Spring Boot",
+      "difficulty": "intermediate",
+      "question": "Spring Boot에서 임베디드 서버 포트를 **사용 가능한 임의의 포트**로 설정하는 방법은 무엇입니까?",
+      "answer": "server.port=0",
+      "explanation": "`server.port=0`으로 설정하면, Spring Boot가 실행될 때마다 사용 가능한 포트를 동적으로 할당합니다. 이는 테스트 환경에서 유용합니다."
+    },
+    {
+      "id": 36,
+      "type": "multiple_choice",
+      "category": "Spring Core",
+      "difficulty": "beginner",
+      "question": "다음 중 Spring Framework의 핵심 컨테이너를 구성하는 두 가지 주요 요소는 무엇입니까?",
+      "choices": [
+        "AOP와 MVC",
+        "IoC Container와 ApplicationContext",
+        "BeanFactory와 ApplicationContext",
+        "DAO와 Service"
+      ],
+      "answer": "BeanFactory와 ApplicationContext",
+      "explanation": "BeanFactory는 Spring IoC 컨테이너의 가장 기본적인 인터페이스이며, ApplicationContext는 BeanFactory를 확장하여 더 많은 기능(AOP, 메시지 리소스 핸들링 등)을 제공하는 고급 컨테이너입니다."
+    },
+    {
+      "id": 37,
+      "type": "short_answer",
+      "category": "Spring Data JPA",
+      "difficulty": "advanced",
+      "question": "JPA에서 **영속성 컨텍스트(Persistence Context)**의 역할 중 하나인 **Dirty Checking**의 원리를 설명하세요.",
+      "answer": "Dirty Checking은 트랜잭션이 커밋되는 시점에 영속성 컨텍스트에 저장된 엔티티의 현재 상태(스냅샷)와 최종 상태를 비교하여 변경된 필드(Dirty)가 있을 경우, 별도의 `update()` 호출 없이 자동으로 변경 내용을 데이터베이스에 반영하는 기능입니다.",
+      "explanation": "트랜잭션 내에서 엔티티의 속성만 변경해도 자동으로 UPDATE 쿼리가 발생하도록 합니다."
+    },
+    {
+      "id": 38,
+      "type": "multiple_choice",
+      "category": "Spring MVC",
+      "difficulty": "intermediate",
+      "question": "REST API 개발 시, 리소스의 **부분 업데이트**에 가장 적절한 HTTP 메서드는 무엇입니까?",
+      "choices": ["GET", "POST", "PUT", "PATCH"],
+      "answer": "PATCH",
+      "explanation": "PUT은 리소스의 전체를 교체하는 데 사용되며, PATCH는 리소스의 일부(부분)를 수정하는 데 사용됩니다."
+    },
+    {
+      "id": 39,
+      "type": "descriptive",
+      "category": "Spring Core",
+      "difficulty": "advanced",
+      "question": "Spring의 **트랜잭션 전파(Propagation)** 옵션 중 `REQUIRED`와 `REQUIRES_NEW`의 차이점을 설명하세요.",
+      "answer": "**`REQUIRED`**는 이미 진행 중인 트랜잭션이 있으면 그 트랜잭션에 참여하고, 없으면 새로운 트랜잭션을 시작합니다. **`REQUIRES_NEW`**는 항상 새로운 트랜잭션을 시작하며, 이미 진행 중인 트랜잭션이 있으면 해당 트랜잭션을 잠시 **일시 중지(suspend)**시킨 후 새 트랜잭션을 실행합니다. 이는 두 작업이 완전히 독립적으로 커밋되도록 보장합니다.",
+      "explanation": "`REQUIRES_NEW`는 내부 트랜잭션이 실패하더라도 외부 트랜잭션에 영향을 주지 않아야 할 때 유용합니다."
+    },
+    {
+      "id": 40,
+      "type": "short_answer",
+      "category": "Spring Boot",
+      "difficulty": "beginner",
+      "question": "Spring Boot에서 애플리케이션 실행을 위한 엔트리 포인트(Entry Point) 클래스에 붙이는 주요 애노테이션은 무엇입니까?",
+      "answer": "@SpringBootApplication",
+      "explanation": "이 애노테이션은 `@Configuration`, `@EnableAutoConfiguration`, `@ComponentScan`을 포함하는 편리한 통합 애노테이션입니다."
+    },
+    {
+      "id": 41,
+      "type": "multiple_choice",
+      "category": "Spring Security",
+      "difficulty": "intermediate",
+      "question": "Spring Security 설정에서 모든 요청에 대해 인증을 요구하는 올바른 설정은 무엇입니까?",
+      "choices": [
+        "`.anyRequest().permitAll()`",
+        "`.anyRequest().hasRole(\"USER\")`",
+        "`.anyRequest().authenticated()`",
+        "`.antMatchers(\"/**\").anonymous()`"
+      ],
+      "answer": "`.anyRequest().authenticated()`",
+      "explanation": "`.authenticated()`는 해당 경로에 접근하는 사용자가 인증(로그인)되어야 함을 의미합니다."
+    },
+    {
+      "id": 42,
+      "type": "short_answer",
+      "category": "Spring Data JPA",
+      "difficulty": "intermediate",
+      "question": "JPA에서 엔티티를 삭제하기 위해 `repository.delete(entity)`를 호출한 후에도 데이터베이스에서 즉시 삭제되지 않을 수 있습니다. 쿼리가 실제로 실행되는 시점은 언제입니까?",
+      "answer": "트랜잭션 커밋 시 (플러시 발생 시)",
+      "explanation": "삭제 작업도 쓰기 작업의 일부이므로, 트랜잭션 커밋 또는 명시적인 `flush()` 호출 시점에 쿼리가 데이터베이스에 전송됩니다."
+    },
+    {
+      "id": 43,
+      "type": "multiple_choice",
+      "category": "Spring MVC",
+      "difficulty": "intermediate",
+      "question": "다음 Controller 코드에서 URL 경로 `/users/100`에 대응하는 메서드는 무엇이며, `userId`의 값은 무엇입니까?\n\n```java\n@GetMapping(\"/users/{userId}\")\npublic String getUser(@PathVariable(\"userId\") Long userId) { ... }\n```",
+      "choices": [
+        "getUser 메서드, userId = \"users\"",
+        "getUser 메서드, userId = 100L",
+        "오류 발생, String 타입의 Long으로 변환 불가",
+        "해당 메서드가 아닌 다른 메서드가 호출된다"
+      ],
+      "answer": "getUser 메서드, userId = 100L",
+      "explanation": "`@PathVariable`은 URL 경로의 변수(`{userId}`)를 추출하여 메서드 인자에 바인딩하며, Spring은 자동으로 Long 타입으로 변환합니다."
+    },
+    {
+      "id": 44,
+      "type": "short_answer",
+      "category": "Spring Boot",
+      "difficulty": "beginner",
+      "question": "Spring Boot 애플리케이션을 외부의 별도 설정 파일(예: `dev.properties`)을 지정하여 실행하는 명령줄 옵션은 무엇입니까?",
+      "answer": "`--spring.config.location`",
+      "explanation": "예: `java -jar app.jar --spring.config.location=file:/path/to/dev.properties`"
+    },
+    {
+      "id": 45,
+      "type": "descriptive",
+      "category": "Spring Data JPA",
+      "difficulty": "advanced",
+      "question": "JPA 영속성 컨텍스트의 4가지 상태(비영속, 영속, 준영속, 삭제)를 설명하세요.",
+      "answer": "**비영속(New/Transient):** 객체를 생성했으나 영속성 컨텍스트와 관계가 없는 상태. **영속(Managed):** `EntityManager.persist()` 등으로 영속성 컨텍스트에 저장된 상태. 이때 Dirty Checking 등 JPA의 이점을 누림. **준영속(Detached):** 영속성 컨텍스트에 저장되었다가 분리된 상태(`EntityManager.detach()` 또는 트랜잭션 종료 시). **삭제(Removed):** `EntityManager.remove()`로 삭제되었으나 아직 DB 반영 전 상태.",
+      "explanation": "엔티티의 생명주기를 이해하는 것은 JPA를 올바르게 사용하는 데 중요합니다."
+    }
+  ]
+}
