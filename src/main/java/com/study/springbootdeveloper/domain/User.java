@@ -1,5 +1,6 @@
 package com.study.springbootdeveloper.domain;
 
+import com.study.springbootdeveloper.type.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,11 +24,13 @@ public class User {
     private Long id;
 
     @Column(unique = true)
-    private String email;
+    private String loginId;
 
     private String nickname;
 
     private String password;
+
+    private UserRole role;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
