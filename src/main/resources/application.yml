@@ -20,6 +20,8 @@ spring:
             scope:
               - email
               - profile
+  jwt:
+    secret: ${JWT_SECRET_KEY}
 
 gemini:
   api:
@@ -45,6 +47,3 @@ app:
       file-path: data.json
 
 
-jwt:
-  issuer: ajufresh@gmail.com
-  secret_key: ${JWT_SECRET_KEY}
