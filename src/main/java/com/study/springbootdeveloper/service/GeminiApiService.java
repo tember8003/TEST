@@ -2,6 +2,8 @@ package com.study.springbootdeveloper.service;
 
 import com.study.springbootdeveloper.domain.Problem;
 import com.study.springbootdeveloper.dto.response.GradingResultDto;
+import com.study.springbootdeveloper.handler.RestApiException;
+import com.study.springbootdeveloper.type.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,7 @@ import java.util.Map;
 @Service
 public class GeminiApiService {
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key:}")
     private String apiKey;
 
     @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent}")
@@ -28,17 +30,39 @@ public class GeminiApiService {
      * 단답형/서술형 답변 채점
      */
     public GradingResultDto gradeAnswer(Problem problem, String userAnswer) {
-        String prompt = buildGradingPrompt(problem, userAnswer);
-        String response = callGeminiApi(prompt);
-        return parseGradingResponse(response);
+        // API Key 검증
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("Gemini API Key가 설정되지 않았습니다. 기본 채점을 사용합니다.");
+            return fallbackGrading(problem, userAnswer);
+        }
+
+        try {
+            String prompt = buildGradingPrompt(problem, userAnswer);
+            String response = callGeminiApi(prompt);
+            return parseGradingResponse(response);
+        } catch (Exception e) {
+            log.error("Gemini API 채점 실패, 기본 채점으로 전환", e);
+            return fallbackGrading(problem, userAnswer);
+        }
     }
 
     /**
      * 객관식 문제 보충 설명 생성
      */
     public String generateExplanation(Problem problem, String userAnswer, boolean isCorrect) {
-        String prompt = buildExplanationPrompt(problem, userAnswer, isCorrect);
-        return callGeminiApi(prompt);
+        // API Key 검증
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("Gemini API Key가 설정되지 않았습니다. 기본 설명을 사용합니다.");
+            return problem.getExplanation();
+        }
+
+        try {
+            String prompt = buildExplanationPrompt(problem, userAnswer, isCorrect);
+            return callGeminiApi(prompt);
+        } catch (Exception e) {
+            log.error("Gemini API 설명 생성 실패, 기본 설명 사용", e);
+            return problem.getExplanation();
+        }
     }
 
     /**
@@ -128,7 +152,7 @@ public class GeminiApiService {
         try {
             String url = apiUrl + "?key=" + apiKey;
 
-            // 요청 바디 구성 (명확한 타입 지정)
+            // 요청 바디 구성
             Map<String, String> part = new HashMap<>();
             part.put("text", prompt);
 
@@ -142,9 +166,11 @@ public class GeminiApiService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            // API 호출
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
-            // 응답 파싱 (명시적 타입 캐스팅)
+            // 응답 파싱
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
 
@@ -166,11 +192,11 @@ public class GeminiApiService {
             }
 
             log.error("Gemini API 응답 파싱 실패");
-            return "AI 피드백 생성에 실패했습니다.";
+            throw new RestApiException(ErrorCode.GEMINI_API_ERROR);
 
         } catch (Exception e) {
             log.error("Gemini API 호출 실패", e);
-            return "AI 피드백 생성 중 오류가 발생했습니다.";
+            throw new RestApiException(ErrorCode.GEMINI_API_ERROR);
         }
     }
 
@@ -190,7 +216,9 @@ public class GeminiApiService {
                     judgement = line.substring(4).trim();
                 } else if (line.startsWith("점수:")) {
                     String scoreStr = line.substring(4).trim().replaceAll("[^0-9]", "");
-                    score = Integer.parseInt(scoreStr);
+                    if (!scoreStr.isEmpty()) {
+                        score = Integer.parseInt(scoreStr);
+                    }
                 } else if (line.startsWith("피드백:")) {
                     feedback.append(line.substring(5).trim());
                 } else if (!line.trim().isEmpty() && feedback.length() > 0) {
@@ -208,13 +236,31 @@ public class GeminiApiService {
 
         } catch (Exception e) {
             log.error("채점 응답 파싱 실패", e);
-
-            return GradingResultDto.builder()
-                    .isCorrect(false)
-                    .score(0)
-                    .feedback("채점 결과 파싱에 실패했습니다.")
-                    .build();
+            throw new RestApiException(ErrorCode.GEMINI_API_ERROR);
         }
     }
 
+    /**
+     * API 실패 시 폴백 채점 (간단한 키워드 매칭)
+     */
+    private GradingResultDto fallbackGrading(Problem problem, String userAnswer) {
+        log.info("Fallback 채점 사용: problemId={}", problem.getId());
+
+        String correctAnswer = problem.getAnswer().toLowerCase().trim();
+        String userAnswerLower = userAnswer.toLowerCase().trim();
+
+        // 간단한 유사도 체크
+        boolean isCorrect = userAnswerLower.contains(correctAnswer) || correctAnswer.contains(userAnswerLower);
+        int score = isCorrect ? 100 : 0;
+
+        String feedback = isCorrect
+                ? "정답입니다! (자동 채점)\n기본 해설: " + problem.getExplanation()
+                : "오답입니다. (자동 채점)\n정답: " + problem.getAnswer() + "\n기본 해설: " + problem.getExplanation();
+
+        return GradingResultDto.builder()
+                .isCorrect(isCorrect)
+                .score(score)
+                .feedback(feedback)
+                .build();
+    }
 }

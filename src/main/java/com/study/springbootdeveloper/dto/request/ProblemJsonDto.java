@@ -1,5 +1,7 @@
 package com.study.springbootdeveloper.dto.request;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.springbootdeveloper.domain.Problem;
 import com.study.springbootdeveloper.type.Category;
 import com.study.springbootdeveloper.type.DifficultyType;
@@ -12,6 +14,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class ProblemJsonDto {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private Long id;
     private String type;
@@ -26,6 +30,16 @@ public class ProblemJsonDto {
      * DTO -> Entity 변환
      */
     public Problem toEntity() {
+
+        String choicesJson = null;
+        if (choices != null && !choices.isEmpty()) {
+            try {
+                choicesJson = objectMapper.writeValueAsString(choices);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to convert choices to JSON", e);
+            }
+        }
+
         return Problem.builder()
                 .problemType(parseProblemType(type))
                 .category(parseCategory(category))
@@ -33,7 +47,7 @@ public class ProblemJsonDto {
                 .question(question)
                 .answer(answer)
                 .explanation(explanation)
-                .choicesJson(choices != null ? String.join(",", choices) : null)
+                .choicesJson(choicesJson)
                 .build();
     }
 

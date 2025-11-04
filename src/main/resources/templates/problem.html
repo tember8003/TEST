@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +8,11 @@
     <style>
         body {
             background: #f5f5f5;
-            padding-bottom: 50px;
+            padding: 20px 0;
         }
         .problem-container {
             max-width: 900px;
-            margin: 40px auto;
+            margin: 0 auto;
             background: white;
             border-radius: 15px;
             padding: 40px;
@@ -30,10 +30,6 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: #667eea;
-        }
-        .problem-meta {
-            display: flex;
-            gap: 10px;
         }
         .problem-question {
             font-size: 1.3rem;
@@ -77,98 +73,157 @@
             font-weight: bold;
             border-radius: 10px;
         }
-        .navigation-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
+        .result-modal .modal-body {
+            padding: 30px;
+        }
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .result-correct {
+            color: #28a745;
+        }
+        .result-incorrect {
+            color: #dc3545;
+        }
+        .ai-feedback {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading.active {
+            display: block;
         }
     </style>
 </head>
 <body>
 <div class="problem-container">
-    <!-- 문제 헤더 -->
+    <!-- Problem Header -->
     <div class="problem-header">
-        <div class="problem-number" id="problemNumber">문제 1/20</div>
-        <div class="problem-meta">
-            <span class="badge bg-primary" id="categoryBadge">Spring Core</span>
+        <div class="problem-number" id="problemNumber">문제 1/10</div>
+        <div>
+            <span class="badge bg-primary me-2" id="categoryBadge">Spring Core</span>
             <span class="badge bg-warning" id="difficultyBadge">중급</span>
             <span class="badge bg-info" id="typeBadge">객관식</span>
         </div>
     </div>
 
-    <!-- 문제 -->
+    <!-- Question -->
     <div class="problem-question" id="problemQuestion">
         문제를 불러오는 중...
     </div>
 
-    <!-- 답안 영역 -->
+    <!-- Answer Area -->
     <div id="answerArea">
-        <!-- 객관식 또는 주관식 답안이 동적으로 생성됨 -->
+        <!-- 동적으로 생성 -->
     </div>
 
-    <!-- 버튼 -->
-    <div class="navigation-buttons">
-        <button class="btn btn-outline-secondary" onclick="goBack()">
-            ← 뒤로가기
-        </button>
-        <button class="btn btn-primary btn-submit" onclick="submitAnswer()">
-            제출하기 →
-        </button>
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">채점 중입니다...</p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-secondary" onclick="goBack()">← 뒤로가기</button>
+        <button class="btn btn-primary btn-submit" onclick="submitAnswer()">제출하기 →</button>
     </div>
 </div>
 
-<!-- 결과 모달 -->
+<!-- Result Modal -->
 <div class="modal fade" id="resultModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="resultTitle">결과</h5>
+                <h5 class="modal-title">채점 결과</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="resultBody">
-                <!-- 결과 내용 -->
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="result-icon" id="resultIcon">✓</div>
+                    <h3 id="resultTitle">정답입니다!</h3>
+                    <p class="text-muted" id="resultScore">점수: 100점</p>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="fw-bold">📝 해설</h6>
+                    <p id="resultExplanation" class="mb-0"></p>
+                </div>
+
+                <div class="ai-feedback" id="aiFeedback" style="display:none;">
+                    <h6 class="fw-bold mb-3">🤖 AI 피드백</h6>
+                    <div id="aiFeedbackContent"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                <button type="button" class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
+                <button type="button" class="btn btn-primary" onclick="nextProblem()">다음 문제 →</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/token.js"></script>
 <script>
-    let currentProblem = null;
     let problems = [];
     let currentIndex = 0;
+    let currentProblem = null;
     let selectedAnswer = '';
+    let resultModal;
 
-    // URL 파라미터에서 카테고리, 난이도 가져오기
+    // URL 파라미터 파싱
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('category');
     const difficulty = urlParams.get('difficulty');
-    const userId = 1; // TODO: 실제 사용자 ID
+    const mode = urlParams.get('mode') || 'free';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+        loadProblems();
+    });
 
     async function loadProblems() {
         try {
-            const response = await fetch(`/api/problems?category=${category}&difficulty=${difficulty}&userId=${userId}`, {
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                }
-            });
+            const response = await fetch(`/api/problems?category=${category}&difficulty=${difficulty}`);
+
+            if (!response.ok) {
+                throw new Error('문제 로드 실패');
+            }
+
             problems = await response.json();
+
+            if (problems.length === 0) {
+                alert('해당 조건의 문제가 없습니다.');
+                goBack();
+                return;
+            }
+
+            // 챌린지 모드면 랜덤 10개 선택
+            if (mode === 'challenge' && problems.length > 10) {
+                problems = problems.sort(() => Math.random() - 0.5).slice(0, 10);
+            }
+
             displayProblem(0);
         } catch (error) {
-            console.error('문제 로드 실패:', error);
+            console.error('문제 로드 오류:', error);
             alert('문제를 불러오는데 실패했습니다.');
+            goBack();
         }
     }
 
     function displayProblem(index) {
         if (index >= problems.length) {
-            alert('모든 문제를 풀었습니다!');
-            location.href = '/statistics';
+            alert('모든 문제를 풀었습니다! 🎉');
+            goBack();
             return;
         }
 
@@ -176,22 +231,22 @@
         currentProblem = problems[index];
         selectedAnswer = '';
 
-        // 헤더 업데이트
+        // Header 업데이트
         document.getElementById('problemNumber').textContent = `문제 ${index + 1}/${problems.length}`;
         document.getElementById('categoryBadge').textContent = getCategoryName(currentProblem.category);
         document.getElementById('difficultyBadge').textContent = getDifficultyName(currentProblem.difficulty);
         document.getElementById('typeBadge').textContent = getTypeName(currentProblem.problemType);
 
-        // 문제 표시
+        // Question 표시
         document.getElementById('problemQuestion').textContent = currentProblem.question;
 
-        // 답안 영역 생성
+        // Answer Area 생성
         const answerArea = document.getElementById('answerArea');
         answerArea.innerHTML = '';
 
         if (currentProblem.problemType === 'MULTIPLE_CHOICE' && currentProblem.choices) {
             // 객관식
-            currentProblem.choices.forEach((choice, i) => {
+            currentProblem.choices.forEach((choice) => {
                 const choiceDiv = document.createElement('div');
                 choiceDiv.className = 'choice-option';
                 choiceDiv.textContent = choice;
@@ -225,12 +280,15 @@
             return;
         }
 
+        // 로딩 표시
+        document.getElementById('loading').classList.add('active');
+        document.querySelector('.btn-submit').disabled = true;
+
         try {
             const response = await fetch('/api/problems/submit', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     problemId: currentProblem.id,
@@ -238,63 +296,68 @@
                 })
             });
 
+            if (!response.ok) {
+                throw new Error('답안 제출 실패');
+            }
+
             const result = await response.json();
             showResult(result);
         } catch (error) {
-            console.error('답안 제출 실패:', error);
+            console.error('답안 제출 오류:', error);
             alert('답안 제출에 실패했습니다.');
+        } finally {
+            document.getElementById('loading').classList.remove('active');
+            document.querySelector('.btn-submit').disabled = false;
         }
     }
 
     function showResult(result) {
-        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
-        const title = document.getElementById('resultTitle');
-        const body = document.getElementById('resultBody');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultScore = document.getElementById('resultScore');
+        const resultExplanation = document.getElementById('resultExplanation');
+        const aiFeedback = document.getElementById('aiFeedback');
+        const aiFeedbackContent = document.getElementById('aiFeedbackContent');
 
+        // 정답 여부에 따라 표시
         if (result.isCorrect) {
-            title.innerHTML = '✅ 정답입니다!';
-            title.className = 'modal-title text-success';
+            resultIcon.textContent = '✓';
+            resultIcon.className = 'result-icon result-correct';
+            resultTitle.textContent = '정답입니다! 🎉';
         } else {
-            title.innerHTML = '❌ 오답입니다';
-            title.className = 'modal-title text-danger';
+            resultIcon.textContent = '✗';
+            resultIcon.className = 'result-icon result-incorrect';
+            resultTitle.textContent = '아쉽게도 오답입니다';
         }
 
-        body.innerHTML = `
-                <div class="mb-3">
-                    <h6>점수</h6>
-                    <div class="progress">
-                        <div class="progress-bar ${result.isCorrect ? 'bg-success' : 'bg-danger'}"
-                             style="width: ${result.score}%">
-                            ${result.score}점
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <h6>AI 피드백</h6>
-                    <p class="text-muted" style="white-space: pre-wrap;">${result.aiFeedback}</p>
-                </div>
-                ${currentProblem.explanation ? `
-                <div>
-                    <h6>해설</h6>
-                    <p class="text-muted">${currentProblem.explanation}</p>
-                </div>
-                ` : ''}
-            `;
+        resultScore.textContent = `점수: ${result.score}점`;
+        resultExplanation.textContent = currentProblem.explanation || '해설이 없습니다.';
 
-        modal.show();
+        // AI 피드백 표시
+        if (result.aiFeedback) {
+            aiFeedback.style.display = 'block';
+            aiFeedbackContent.textContent = result.aiFeedback;
+        } else {
+            aiFeedback.style.display = 'none';
+        }
+
+        resultModal.show();
     }
 
     function nextProblem() {
-        bootstrap.Modal.getInstance(document.getElementById('resultModal')).hide();
+        resultModal.hide();
         displayProblem(currentIndex + 1);
     }
 
     function goBack() {
-        if (confirm('이전 화면으로 돌아가시겠습니까?')) {
-            history.back();
+        if (mode === 'challenge') {
+            location.href = '/';
+        } else {
+            location.href = '/category';
         }
     }
 
+    // Helper functions
     function getCategoryName(category) {
         const names = {
             'SPRING_CORE': 'Spring Core',
@@ -323,8 +386,6 @@
         };
         return names[type] || type;
     }
-
-    document.addEventListener('DOMContentLoaded', loadProblems);
 </script>
 </body>
 </html>

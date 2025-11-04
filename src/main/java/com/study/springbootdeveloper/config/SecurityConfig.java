@@ -93,6 +93,9 @@ public class SecurityConfig {
                 // CORS preflight 요청
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                .requestMatchers("/", "/category", "/problems", "/challenge", "/statistics").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+
                 // 인증 관련 (회원가입, 로그인)
                 .requestMatchers("/api/users/sign-up", "/api/users/sign-in").permitAll()
 
