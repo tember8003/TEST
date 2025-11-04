@@ -147,7 +147,7 @@
                 localStorage.setItem('access_token', accessToken.replace('Bearer ', ''));
             }
 
-            // 사용자 정보 저장
+            // 최소 정보만 저장 (UI 표시용)
             localStorage.setItem('user', JSON.stringify({
                 loginId: data.loginId || loginId,
                 role: data.role || 'ROLE_USER'
@@ -155,7 +155,6 @@
 
             showAlert('로그인 성공!', 'success');
 
-            // 페이지 이동
             setTimeout(() => {
                 window.location.href = '/';
             }, 500);

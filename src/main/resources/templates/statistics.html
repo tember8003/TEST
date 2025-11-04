@@ -158,23 +158,88 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/token.js"></script>
 <script>
-    const userId = 1; // TODO: 실제 사용자 ID
+    // ========== 인증 체크 ==========
+    function checkAuth() {
+        const accessToken = localStorage.getItem('access_token');
 
+        if (!accessToken) {
+            alert('로그인이 필요한 페이지입니다.');
+            window.location.href = '/login';
+            return false;
+        }
+
+        return true;
+    }
+
+    // 페이지 로드 시 즉시 실행
+    if (!checkAuth()) {
+        throw new Error('Authentication required');
+    }
+
+    // ========== 사용자 프로필 조회 ==========
+    let currentUserId = null;
+
+    async function loadUserProfile() {
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch('/api/users/profile', {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    localStorage.clear();
+                    window.location.href = '/login';
+                    return null;
+                }
+                throw new Error('프로필 로드 실패');
+            }
+
+            const profile = await response.json();
+            currentUserId = profile.userId;
+
+            return profile;
+
+        } catch (error) {
+            console.error('프로필 로드 실패:', error);
+            alert('사용자 정보를 불러올 수 없습니다.');
+            return null;
+        }
+    }
+
+    // ========== 통계 로드 ==========
     async function loadStatistics() {
+        const accessToken = localStorage.getItem('access_token');
+
+        // 먼저 프로필 조회로 userId 획득
+        const profile = await loadUserProfile();
+        if (!profile) return;
+
+        const userId = profile.userId;
+
         try {
             // 전체 통계
             const overallResponse = await fetch(`/api/stats/user/${userId}`, {
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + accessToken
                 }
             });
+
+            if (!overallResponse.ok) {
+                throw new Error('통계 로드 실패');
+            }
+
             const overall = await overallResponse.json();
             displayOverallStats(overall);
 
             // 카테고리별 통계
             const categoryResponse = await fetch(`/api/stats/user/${userId}/category`, {
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + accessToken
                 }
             });
             const categories = await categoryResponse.json();
@@ -183,7 +248,7 @@
             // 취약점 분석
             const weakResponse = await fetch(`/api/stats/user/${userId}/weak-points`, {
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + accessToken
                 }
             });
             const weakPoints = await weakResponse.json();
@@ -192,7 +257,7 @@
             // 오답 노트
             const wrongResponse = await fetch(`/api/stats/user/${userId}/wrong-answers`, {
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + accessToken
                 }
             });
             const wrongAnswers = await wrongResponse.json();
@@ -200,19 +265,26 @@
 
         } catch (error) {
             console.error('통계 로드 실패:', error);
+            alert('통계를 불러오는데 실패했습니다.');
         }
     }
 
+    // ========== 화면 표시 함수들 ==========
     function displayOverallStats(stats) {
-        document.getElementById('totalProblems').textContent = stats.totalProblems;
-        document.getElementById('solvedProblems').textContent = stats.solvedProblems;
-        document.getElementById('correctCount').textContent = stats.correctCount;
-        document.getElementById('accuracy').textContent = stats.accuracy + '%';
+        document.getElementById('totalProblems').textContent = stats.totalProblems || 0;
+        document.getElementById('solvedProblems').textContent = stats.solvedProblems || 0;
+        document.getElementById('correctCount').textContent = stats.correctCount || 0;
+        document.getElementById('accuracy').textContent = (stats.accuracy || 0) + '%';
     }
 
     function displayCategoryStats(categories) {
         const container = document.getElementById('categoryStats');
         container.innerHTML = '';
+
+        if (!categories || categories.length === 0) {
+            container.innerHTML = '<p class="text-muted">카테고리 통계가 없습니다.</p>';
+            return;
+        }
 
         categories.forEach(cat => {
             const progressPercent = (cat.solvedProblems / cat.totalProblems) * 100;
@@ -221,17 +293,17 @@
             const div = document.createElement('div');
             div.className = 'category-progress';
             div.innerHTML = `
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><strong>${getCategoryName(cat.category)}</strong></span>
-                        <span>${cat.solvedProblems}/${cat.totalProblems}
-                            <span class="badge bg-${accuracyClass}">${cat.accuracy}%</span>
-                        </span>
-                    </div>
-                    <div class="progress" style="height: 10px;">
-                        <div class="progress-bar bg-${accuracyClass}"
-                             style="width: ${progressPercent}%"></div>
-                    </div>
-                `;
+            <div class="d-flex justify-content-between mb-2">
+                <span><strong>${getCategoryName(cat.category)}</strong></span>
+                <span>${cat.solvedProblems}/${cat.totalProblems}
+                    <span class="badge bg-${accuracyClass}">${cat.accuracy}%</span>
+                </span>
+            </div>
+            <div class="progress" style="height: 10px;">
+                <div class="progress-bar bg-${accuracyClass}"
+                     style="width: ${progressPercent}%"></div>
+            </div>
+        `;
             container.appendChild(div);
         });
     }
@@ -239,52 +311,53 @@
     function displayWeakPoints(weakPoints) {
         const container = document.getElementById('weakPoints');
 
-        if (weakPoints.length === 0) {
-            container.innerHTML = '<p class="text-muted">취약점이 없습니다! 잘하고 계십니다 🎉</p>';
+        if (!weakPoints || weakPoints.length === 0) {
+            container.innerHTML = '<p class="text-muted">취약점이 없습니다! 👍</p>';
             return;
         }
 
-        container.innerHTML = '';
-        weakPoints.slice(0, 5).forEach(wp => {
-            const div = document.createElement('div');
-            div.className = 'weak-point-item';
-            div.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <span>
-                            <strong>${getCategoryName(wp.category)}</strong> - ${getDifficultyName(wp.difficulty)}
-                        </span>
-                        <span class="accuracy-badge bg-warning text-dark">
-                            ${wp.accuracy}%
-                        </span>
-                    </div>
-                    <small class="text-muted">${wp.solvedCount}개 문제 중 ${wp.correctCount}개 정답</small>
-                `;
-            container.appendChild(div);
-        });
+        container.innerHTML = weakPoints.map(wp => `
+        <div class="weak-point-item">
+            <strong>${getCategoryName(wp.category)} - ${getDifficultyName(wp.difficulty)}</strong>
+            <div class="mt-2">
+                정답률: <strong>${wp.accuracy}%</strong>
+                (${wp.correctCount}/${wp.totalAttempts})
+            </div>
+        </div>
+    `).join('');
     }
 
     function displayWrongAnswers(wrongAnswers) {
         const container = document.getElementById('wrongAnswers');
 
-        if (wrongAnswers.length === 0) {
-            container.innerHTML = '<p class="text-muted">틀린 문제가 없습니다! 완벽합니다 🎉</p>';
+        if (!wrongAnswers || wrongAnswers.length === 0) {
+            container.innerHTML = '<p class="text-muted">틀린 문제가 없습니다! 🎉</p>';
             return;
         }
 
-        container.innerHTML = `<p class="text-muted mb-3">총 ${wrongAnswers.length}개의 오답</p>`;
-
-        wrongAnswers.slice(0, 10).forEach(wa => {
-            const div = document.createElement('div');
-            div.className = 'mb-2 p-2 border-start border-3 border-danger';
-            div.innerHTML = `
-                    <small class="text-muted">문제 #${wa.problemId}</small>
-                    <div><strong>내 답안:</strong> ${wa.userAnswer}</div>
-                    <small class="text-danger">점수: ${wa.score}점</small>
-                `;
-            container.appendChild(div);
-        });
+        container.innerHTML = wrongAnswers.map(ans => `
+        <div class="border-bottom pb-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>${ans.question}</strong>
+                    <div class="mt-2">
+                        <span class="badge bg-secondary">${getCategoryName(ans.category)}</span>
+                        <span class="badge bg-warning">${getDifficultyName(ans.difficulty)}</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="reviewProblem(${ans.problemId})">
+                    복습하기
+                </button>
+            </div>
+        </div>
+    `).join('');
     }
 
+    function reviewProblem(problemId) {
+        window.location.href = `/problems?problemId=${problemId}`;
+    }
+
+    // ========== 유틸리티 함수 ==========
     function getCategoryName(category) {
         const names = {
             'SPRING_CORE': 'Spring Core',
@@ -305,49 +378,10 @@
         return names[difficulty] || difficulty;
     }
 
-    document.addEventListener('DOMContentLoaded', loadStatistics);
-
-    function updateNavbar() {
-        const navbarMenu = document.getElementById('navbarMenu');
-        const accessToken = localStorage.getItem('access_token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const isLoggedIn = !!accessToken;
-        const isAdmin = user.role === 'ROLE_ADMIN';
-
-        if (isLoggedIn) {
-            navbarMenu.innerHTML = `
-            <li class="nav-item">
-                <a class="nav-link" href="/statistics">📊 통계</a>
-            </li>
-            ${isAdmin ? '<li class="nav-item"><a class="nav-link" href="/admin">🛠️ 관리자</a></li>' : ''}
-            <li class="nav-item ms-3">
-                <span class="user-badge">👤 ${user.loginId || '사용자'}</span>
-            </li>
-            <li class="nav-item ms-2">
-                <button class="btn btn-logout" onclick="logout()">로그아웃</button>
-            </li>
-        `;
-        } else {
-            navbarMenu.innerHTML = `
-            <li class="nav-item me-2">
-                <a href="/login" class="btn btn-login">로그인</a>
-            </li>
-            <li class="nav-item">
-                <a href="/signup" class="btn btn-signup">회원가입</a>
-            </li>
-        `;
-        }
-    }
-
-    function logout() {
-        if (confirm('로그아웃 하시겠습니까?')) {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('user');
-            window.location.href = '/';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', updateNavbar);
+    // ========== 페이지 초기화 ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+    });
 </script>
 </body>
 </html>

@@ -202,6 +202,51 @@ const GuestUtil = {
     }
 };
 
+/*
+ 현재 로그인한 사용자 프로필 조회
+ @returns {Promise<Object|null>} 사용자 프로필 또는 null
+ */
+async function getCurrentUserProfile() {
+    const accessToken = localStorage.getItem('access_token');
+
+    if (!accessToken) {
+        return null;
+    }
+
+    try {
+        const response = await fetch('/api/users/profile', {
+            headers: {
+                'Authorization': 'Bearer ' + accessToken
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                // 세션 만료
+                localStorage.clear();
+                window.location.href = '/login';
+                return null;
+            }
+            throw new Error('프로필 로드 실패');
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('프로필 조회 오류:', error);
+        return null;
+    }
+}
+
+/*
+ 현재 로그인한 사용자의 userId 조회
+ @returns {Promise<number|null>} userId 또는 null
+ */
+async function getCurrentUserId() {
+    const profile = await getCurrentUserProfile();
+    return profile ? profile.userId : null;
+}
+
 // 전역으로 export
 window.CookieUtil = CookieUtil;
 window.ApiClient = ApiClient;
@@ -210,3 +255,5 @@ window.AlertUtil = AlertUtil;
 window.DateUtil = DateUtil;
 window.ProblemUtil = ProblemUtil;
 window.GuestUtil = GuestUtil;
+window.getCurrentUserProfile = getCurrentUserProfile;
+window.getCurrentUserId = getCurrentUserId;

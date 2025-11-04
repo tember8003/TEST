@@ -93,38 +93,37 @@ public class SecurityConfig {
                 // CORS preflight 요청
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ========== 정적 리소스 및 HTML 페이지 허용 ==========
+                // ========== 정적 리소스 및 비로그인 페이지 ==========
                 .requestMatchers("/", "/login", "/signup", "/category", "/problems", "/challenge").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
 
-                // ========== 어드민 페이지 (ADMIN만 접근) ==========
-                .requestMatchers("/admin", "/statistics").hasRole("ADMIN")
+                // ========== 로그인 필요 페이지 ==========
+                .requestMatchers("/statistics").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/admin").hasRole("ADMIN")
 
-                // 인증 관련 (회원가입, 로그인)
+
+                // ========== 인증 API ==========
                 .requestMatchers("/api/users/sign-up", "/api/users/sign-in").permitAll()
-
-                // 토큰 재발급
+                .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/reissue").permitAll()
 
-                // 문제 조회
+                // ========== 문제 관련 API ==========
                 .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
-                // 문제 답안 제출 (비로그인도 가능)
                 .requestMatchers(HttpMethod.POST, "/api/problems/submit").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/problems/solved/**").hasAnyRole("USER", "ADMIN")
 
-                // 세션 생성 및 관리 (로그인 필요)
+                // ========== 세션 관리 API ==========
                 .requestMatchers("/api/sessions/**").hasAnyRole("USER","ADMIN")
 
-                // === 통계 관련 API ===
+                // ========== 통계 API (USER도 접근 가능하도록 변경) ==========
                 .requestMatchers("/api/stats/**").hasAnyRole("USER", "ADMIN")
 
-                // === 관리자 API ===
+                // ========== 관리자 API ==========
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 나머지 모든 요청: 인증 필요
-                .anyRequest().authenticated()
+                // 나머지 모든 요청: 거부
+                .anyRequest().denyAll()
         );
-
         return http.build();
     }
 }

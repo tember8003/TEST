@@ -2,6 +2,7 @@ package com.study.springbootdeveloper.service;
 
 import com.study.springbootdeveloper.domain.User;
 import com.study.springbootdeveloper.dto.request.UserDto;
+import com.study.springbootdeveloper.dto.response.UserResponse;
 import com.study.springbootdeveloper.handler.RestApiException;
 import com.study.springbootdeveloper.repository.UserRepository;
 import com.study.springbootdeveloper.type.ErrorCode;
@@ -22,7 +23,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     //회원가입
-    public User signUp(UserDto.SignUp request) {
+    public UserResponse signUp(UserDto.SignUp request) {
         log.info("Sign up attempt for loginId: {}", request.getLoginId());
 
         // 중복 체크
@@ -64,7 +65,7 @@ public class UserService {
         log.info("User registered successfully: userId={}, loginId={}, role={}",
                 savedUser.getId(), savedUser.getLoginId(), savedUser.getRole());
 
-        return savedUser;
+        return toUserResponse(savedUser);
     }
 
     //사용자 조회
@@ -76,15 +77,29 @@ public class UserService {
 
     //userId로 사용자 조회
     @Transactional(readOnly = true)
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        return toUserResponse(user);
     }
 
     //유저 삭제 (ADMIN)
     public void deleteUser(Long userId) {
-        User user = getUserById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
         userRepository.delete(user);
         log.info("User deleted: userId={}", userId);
+    }
+
+    private UserResponse toUserResponse(User user) {
+
+        return UserResponse.builder()
+                .userId(user.getId())
+                .loginId(user.getLoginId())
+                .nickname(user.getNickname())
+                .solvedProblems(user.getSolvedProblems())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }
