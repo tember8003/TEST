@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +44,13 @@ public interface SolvedProblemRepository extends JpaRepository<SolvedProblem, Lo
 
     // 틀린 문제만 조회 (오답노트용)
     List<SolvedProblem> findByUserIdAndIsCorrect(Long userId, Boolean isCorrect);
+
+    /**
+     * 특정 guestId의 특정 기간 내 제출 횟수 조회
+     * @param guestId 비로그인 사용자 UUID
+     * @param startTime 시작 시간
+     * @param endTime 종료 시간
+     * @return 제출 횟수
+     */
+    long countByGuestIdAndSolvedAtBetween(String guestId, LocalDateTime startTime, LocalDateTime endTime);
 }

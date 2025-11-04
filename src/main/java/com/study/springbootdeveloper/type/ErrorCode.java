@@ -32,6 +32,9 @@ public enum ErrorCode {
     // SolvedProblem
     SOLVED_NOT_FOUND(HttpStatus.NOT_FOUND, "풀이 기록을 찾을 수 없습니다."),
 
+    // Rate Limit
+    RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "하루 제출 횟수를 초과했습니다. 내일 다시 시도해주세요."),
+
     // Gemini API
     GEMINI_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 피드백 생성 중 오류가 발생했습니다.");
 

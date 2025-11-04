@@ -36,24 +36,24 @@ public class SolvingService {
         this.geminiApiService = geminiApiService;
     }
 
-    /**
-     * 답안 제출 및 채점 (자유 선택 모드)
+    /*
+     답안 제출 및 채점 (자유 선택 모드)
      */
-    public SolvedProblem submitAnswer(Long userId, Long problemId, String userAnswer) {
+    public SolvedProblem submitAnswer(Long userId, Long problemId, String userAnswer, String guestId) {
         User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.PROBLEM_NOT_FOUND));
 
-        // 이미 푼 문제인지 확인
+        // 로그인 사용자: 중복 제출 체크
         if (userId != null && solvedProblemRepository.existsByUserIdAndProblemId(userId, problemId)) {
             throw new RestApiException(ErrorCode.PROBLEM_ALREADY_SOLVED);
         }
 
-        return processAnswer(user, problem, null, userAnswer);
+        return processAnswer(user, problem, null, userAnswer, guestId);
     }
 
-    /**
-     * 세션 내 답안 제출 및 채점 (챌린지 모드)
+    /*
+    세션 내 답안 제출 및 채점 (챌린지 모드)
      */
     public SolvedProblem submitAnswerInSession(Long sessionId, Long problemId, String userAnswer) {
         Session session = sessionRepository.findById(sessionId)
@@ -70,7 +70,8 @@ public class SolvingService {
             throw new RestApiException(ErrorCode.PROBLEM_ALREADY_SOLVED);
         }
 
-        SolvedProblem solvedProblem = processAnswer(session.getUser(), problem, session, userAnswer);
+        // 세션은 로그인 사용자만 사용 가능하므로 guestId는 null
+        SolvedProblem solvedProblem = processAnswer(session.getUser(), problem, session, userAnswer, null);
 
         // 정답이면 세션의 correctCount 증가
         if (solvedProblem.getIsCorrect()) {
@@ -80,10 +81,10 @@ public class SolvingService {
         return solvedProblem;
     }
 
-    /**
-     * 답안 처리 핵심 로직
+    /*
+     답안 처리 핵심 로직
      */
-    private SolvedProblem processAnswer(User user, Problem problem, Session session, String userAnswer) {
+    private SolvedProblem processAnswer(User user, Problem problem, Session session, String userAnswer, String guestId) {
         boolean isCorrect;
         int score;
         String aiFeedback;
@@ -104,7 +105,7 @@ public class SolvingService {
             aiFeedback = gradingResult.getFeedback();
         }
 
-        // SolvedProblem 저장
+        // SolvedProblem 저장 (비로그인 시 user는 null, guestId는 저장)
         SolvedProblem solvedProblem = SolvedProblem.builder()
                 .user(user)
                 .problem(problem)
@@ -113,13 +114,21 @@ public class SolvingService {
                 .isCorrect(isCorrect)
                 .score(score)
                 .aiFeedback(aiFeedback)
+                .guestId(guestId)  // 비로그인 추적용 UUID
                 .build();
+
+        log.info("Answer processed: userId={}, problemId={}, isCorrect={}, score={}, guestId={}",
+                user != null ? user.getId() : "guest",
+                problem.getId(),
+                isCorrect,
+                score,
+                guestId);
 
         return solvedProblemRepository.save(solvedProblem);
     }
 
-    /**
-     * 특정 유저의 풀이 기록 조회
+    /*
+     특정 유저의 풀이 기록 조회
      */
     @Transactional(readOnly = true)
     public SolvedProblem getSolvedProblem(Long userId, Long problemId) {

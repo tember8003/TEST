@@ -41,6 +41,9 @@ public class SolvedProblem {
     @Column(columnDefinition = "TEXT")
     private String aiFeedback;
 
+    @Column(length = 36)
+    private String guestId;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime solvedAt;
 
