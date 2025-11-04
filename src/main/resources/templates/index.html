@@ -10,14 +10,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .main-container {
             max-width: 1000px;
             width: 100%;
-            padding: 20px;
+            padding: 80px 20px 20px;
+            margin: 0 auto;
         }
         .hero-section {
             text-align: center;
@@ -51,23 +49,12 @@
             font-size: 80px;
             margin-bottom: 20px;
         }
-        .start-btn {
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 30px;
-            border: none;
-            background: white;
-            color: #667eea;
-            transition: all 0.3s;
-        }
-        .start-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
     </style>
 </head>
 <body>
+<!-- Navbar (navbar.js 사용) -->
+<div id="navbar-container"></div>
+
 <div class="main-container">
     <!-- Hero Section -->
     <div class="hero-section">
@@ -110,12 +97,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Info Section -->
-    <div class="text-center">
-        <p class="text-white mb-3">💡 로그인 없이 바로 시작할 수 있습니다!</p>
-        <p class="text-white-50 small">회원가입 시 진행도 저장 및 통계 확인 가능</p>
-    </div>
 </div>
 
 <!-- Challenge Modal -->
@@ -145,9 +126,6 @@
                         <option value="ADVANCED">고급</option>
                     </select>
                 </div>
-                <div class="alert alert-info">
-                    <small>📌 로그인하지 않으면 챌린지 기록이 저장되지 않습니다.</small>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
@@ -158,10 +136,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/navbar.js"></script>
 <script>
     let challengeModal;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // 네비게이션 바 삽입
+        document.getElementById('navbar-container').innerHTML = createNavbar();
+
         challengeModal = new bootstrap.Modal(document.getElementById('challengeModal'));
     });
 
@@ -172,8 +154,6 @@
     function startChallenge() {
         const category = document.getElementById('challengeCategory').value;
         const difficulty = document.getElementById('challengeDifficulty').value;
-
-        // 챌린지 모드로 이동 (쿼리 파라미터로 전달)
         location.href = `/problems?mode=challenge&category=${category}&difficulty=${difficulty}`;
     }
 </script>

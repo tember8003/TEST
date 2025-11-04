@@ -93,8 +93,12 @@ public class SecurityConfig {
                 // CORS preflight 요청
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                .requestMatchers("/", "/category", "/problems", "/challenge", "/statistics").permitAll()
+                // ========== 정적 리소스 및 HTML 페이지 허용 ==========
+                .requestMatchers("/", "/login", "/signup", "/category", "/problems", "/challenge").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+
+                // ========== 어드민 페이지 (ADMIN만 접근) ==========
+                .requestMatchers("/admin", "/statistics").hasRole("ADMIN")
 
                 // 인증 관련 (회원가입, 로그인)
                 .requestMatchers("/api/users/sign-up", "/api/users/sign-in").permitAll()
@@ -104,22 +108,21 @@ public class SecurityConfig {
 
                 // 문제 조회
                 .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
-                // 문제 답안 제출
+                // 문제 답안 제출 (비로그인도 가능)
                 .requestMatchers(HttpMethod.POST, "/api/problems/submit").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/problems/solved/**").hasAnyRole("USER", "ADMIN")
 
-                // 세션 생성 및 관리
+                // 세션 생성 및 관리 (로그인 필요)
                 .requestMatchers("/api/sessions/**").hasAnyRole("USER","ADMIN")
 
                 // === 통계 관련 API ===
-                // 통계는 ADMIN만 접근 가능
-                .requestMatchers("/api/stats/**").hasRole("ADMIN")
+                .requestMatchers("/api/stats/**").hasAnyRole("USER", "ADMIN")
 
                 // === 관리자 API ===
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 나머지 모든 요청: 거부 (명시되지 않은 경로 차단)
-                .anyRequest().denyAll()
+                // 나머지 모든 요청: 인증 필요
+                .anyRequest().authenticated()
         );
 
         return http.build();

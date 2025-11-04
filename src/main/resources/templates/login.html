@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - Spring Quiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: none;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #999;
+        }
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-icon">☕</div>
+            <h2 class="fw-bold">로그인</h2>
+            <p class="text-muted">Spring Quiz에 오신 것을 환영합니다</p>
+        </div>
+
+        <!-- Alert -->
+        <div id="alertArea"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="loginId"
+                       placeholder="아이디" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password"
+                       placeholder="비밀번호" required>
+            </div>
+            <button type="submit" class="btn btn-login">로그인</button>
+        </form>
+
+        <!-- Divider -->
+        <div class="divider">또는</div>
+
+        <!-- Guest Button -->
+        <button class="btn btn-outline-secondary w-100 mb-3" onclick="guestLogin()">
+            🎮 게스트로 시작하기
+        </button>
+
+        <!-- Signup Link -->
+        <div class="signup-link">
+            <span class="text-muted">계정이 없으신가요?</span>
+            <a href="/signup" class="ms-2">회원가입</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const loginId = document.getElementById('loginId').value;
+        const password = document.getElementById('password').value;
+
+        showAlert('로그인 중...', 'info');
+
+        try {
+            const response = await fetch('/api/users/sign-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ loginId, password })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || '로그인 실패');
+            }
+
+            const data = await response.json();
+
+            // Access Token 저장
+            const accessToken = response.headers.get('Authorization');
+            if (accessToken) {
+                localStorage.setItem('access_token', accessToken.replace('Bearer ', ''));
+            }
+
+            // 사용자 정보 저장
+            localStorage.setItem('user', JSON.stringify({
+                loginId: data.loginId || loginId,
+                role: data.role || 'ROLE_USER'
+            }));
+
+            showAlert('로그인 성공!', 'success');
+
+            // 페이지 이동
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 500);
+
+        } catch (error) {
+            console.error('로그인 오류:', error);
+            showAlert(error.message || '로그인에 실패했습니다.', 'danger');
+        }
+    });
+
+    function guestLogin() {
+        // 게스트 모드로 메인 페이지 이동
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    }
+
+    function showAlert(message, type) {
+        const alertArea = document.getElementById('alertArea');
+        alertArea.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    }
+</script>
+</body>
+</html>

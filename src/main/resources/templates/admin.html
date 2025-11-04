@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 페이지 - Spring Quiz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f5f5f5;
+      padding-top: 60px;
+    }
+    .admin-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 0;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .table-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn-action {
+      padding: 5px 15px;
+      border-radius: 5px;
+      font-size: 0.85rem;
+    }
+    .navbar-custom {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-custom navbar-expand-lg navbar-light">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">☕ Spring Quiz</a>
+    <div class="navbar-nav ms-auto">
+      <span class="navbar-text me-3">👤 <span id="adminName">관리자</span></span>
+      <button class="btn btn-outline-danger btn-sm" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Header -->
+  <div class="admin-header text-center">
+    <h1 class="mb-2">🛠️ 관리자 대시보드</h1>
+    <p class="mb-0">시스템 전체 관리 및 통계</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-number text-primary" id="totalUsers">0</div>
+        <div class="stat-label">전체 사용자</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-number text-success" id="totalProblems">100</div>
+        <div class="stat-label">전체 문제</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-number text-warning" id="totalSolved">0</div>
+        <div class="stat-label">총 풀이 수</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-number text-danger" id="totalSessions">0</div>
+        <div class="stat-label">챌린지 세션</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Management -->
+  <div class="table-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="mb-0">👥 사용자 관리</h4>
+      <button class="btn btn-primary" onclick="refreshUsers()">새로고침</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>아이디</th>
+          <th>학교</th>
+          <th>역할</th>
+          <th>가입일</th>
+          <th>작업</th>
+        </tr>
+        </thead>
+        <tbody id="userTableBody">
+        <tr>
+          <td colspan="6" class="text-center text-muted">로딩 중...</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Problem Statistics by Category -->
+  <div class="table-card">
+    <h4 class="mb-4">📊 카테고리별 문제 통계</h4>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="p-3 border rounded">
+          <h6>🔧 Spring Core</h6>
+          <div class="d-flex justify-content-between">
+            <span>초급: <strong>6개</strong></span>
+            <span>중급: <strong>7개</strong></span>
+            <span>고급: <strong>7개</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="p-3 border rounded">
+          <h6>⚡ Spring Boot</h6>
+          <div class="d-flex justify-content-between">
+            <span>초급: <strong>6개</strong></span>
+            <span>중급: <strong>7개</strong></span>
+            <span>고급: <strong>7개</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="p-3 border rounded">
+          <h6>🌐 Spring MVC</h6>
+          <div class="d-flex justify-content-between">
+            <span>초급: <strong>3개</strong></span>
+            <span>중급: <strong>4개</strong></span>
+            <span>고급: <strong>3개</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="p-3 border rounded">
+          <h6>💾 Spring Data JPA</h6>
+          <div class="d-flex justify-content-between">
+            <span>초급: <strong>6개</strong></span>
+            <span>중급: <strong>7개</strong></span>
+            <span>고급: <strong>7개</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="p-3 border rounded">
+          <h6>🔒 Spring Security</h6>
+          <div class="d-flex justify-content-between">
+            <span>초급: <strong>3개</strong></span>
+            <span>중급: <strong>4개</strong></span>
+            <span>고급: <strong>3개</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // 권한 체크
+  function checkAdmin() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role !== 'ROLE_ADMIN') {
+      alert('관리자 권한이 필요합니다.');
+      window.location.href = '/';
+      return false;
+    }
+
+    // 관리자 이름 표시
+    document.getElementById('adminName').textContent = user.loginId || '관리자';
+    return true;
+  }
+
+  // 사용자 목록 로드
+  async function loadUsers() {
+    const token = localStorage.getItem('access_token');
+
+    try {
+      // TODO: 실제 API 엔드포인트로 변경 필요
+      // const response = await fetch('/api/admin/users', {
+      //     headers: {
+      //         'Authorization': 'Bearer ' + token
+      //     }
+      // });
+
+      // 임시 데이터
+      const users = [
+        { id: 1, loginId: 'user1', univ: '서울대학교', role: 'ROLE_USER', createdAt: '2025-01-01' },
+        { id: 2, loginId: 'admin', univ: '연세대학교', role: 'ROLE_ADMIN', createdAt: '2025-01-02' }
+      ];
+
+      displayUsers(users);
+
+      // 통계 업데이트
+      document.getElementById('totalUsers').textContent = users.length;
+
+    } catch (error) {
+      console.error('사용자 로드 오류:', error);
+      document.getElementById('userTableBody').innerHTML =
+              '<tr><td colspan="6" class="text-center text-danger">데이터 로드 실패</td></tr>';
+    }
+  }
+
+  function displayUsers(users) {
+    const tbody = document.getElementById('userTableBody');
+
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">사용자가 없습니다</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td><strong>${user.loginId}</strong></td>
+            <td>${user.univ}</td>
+            <td>
+                <span class="badge ${user.role === 'ROLE_ADMIN' ? 'bg-danger' : 'bg-primary'}">
+                    ${user.role === 'ROLE_ADMIN' ? '관리자' : '사용자'}
+                </span>
+            </td>
+            <td>${user.createdAt}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewUser(${user.id})">
+                    상세
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteUser(${user.id})">
+                    삭제
+                </button>
+            </td>
+        </tr>
+    `).join('');
+  }
+
+  function refreshUsers() {
+    loadUsers();
+  }
+
+  function viewUser(userId) {
+    alert(`사용자 ${userId} 상세 정보 (구현 예정)`);
+  }
+
+  function deleteUser(userId) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+      alert(`사용자 ${userId} 삭제 (구현 예정)`);
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+
+  // 페이지 로드 시
+  document.addEventListener('DOMContentLoaded', function() {
+    if (checkAdmin()) {
+      loadUsers();
+    }
+  });
+</script>
+</body>
+</html>

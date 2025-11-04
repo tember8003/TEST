@@ -12,6 +12,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 메인 페이지
         registry.addViewController("/").setViewName("index");
 
+        // 인증 페이지
+        registry.addViewController("/login").setViewName("login");
+        registry.addViewController("/signup").setViewName("signup");
+
         // 카테고리 선택 페이지
         registry.addViewController("/category").setViewName("category");
 
@@ -23,5 +27,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         // 챌린지 모드 페이지
         registry.addViewController("/challenge").setViewName("challenge");
+
+        // 어드민 페이지
+        registry.addViewController("/admin").setViewName("admin");
     }
 }
