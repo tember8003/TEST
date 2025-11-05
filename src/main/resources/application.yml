@@ -44,7 +44,7 @@ springdoc:
 app:
   data:
     init:
-      enabled: true  # 초기화 활성화 여부
+      enabled: false  # 초기화 활성화 여부
       file-path: data.json
 
 
