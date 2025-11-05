@@ -94,13 +94,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // ========== 정적 리소스 및 비로그인 페이지 ==========
-                .requestMatchers("/", "/login", "/signup", "/category", "/problems", "/challenge").permitAll()
+                .requestMatchers("/", "/login", "/signup", "/category", "/problems", "/challenge", "/statistics", "/admin").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-
-                // ========== 로그인 필요 페이지 ==========
-                .requestMatchers("/statistics").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/admin").hasRole("ADMIN")
-
+                
 
                 // ========== 인증 API ==========
                 .requestMatchers("/api/users/sign-up", "/api/users/sign-in").permitAll()
