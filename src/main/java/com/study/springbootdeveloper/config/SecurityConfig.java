@@ -96,7 +96,7 @@ public class SecurityConfig {
                 // ========== 정적 리소스 및 비로그인 페이지 ==========
                 .requestMatchers("/", "/login", "/signup", "/category", "/problems", "/challenge", "/statistics", "/admin").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-                
+
 
                 // ========== 인증 API ==========
                 .requestMatchers("/api/users/sign-up", "/api/users/sign-in").permitAll()

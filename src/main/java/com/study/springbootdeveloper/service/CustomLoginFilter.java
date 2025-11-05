@@ -117,6 +117,8 @@ public class CustomLoginFilter extends GenericFilterBean {
 
         Map<String, Object> message = new HashMap<>();
         message.put("message", "로그인 성공!");
+        message.put("loginId", user.getLoginId());
+        message.put("role", user.getRole().name());
         message.put("accessToken", accessToken);
         message.put("refreshToken", refreshToken);
 
