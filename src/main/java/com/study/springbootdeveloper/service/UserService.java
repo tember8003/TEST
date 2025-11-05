@@ -32,24 +32,6 @@ public class UserService {
             throw new RestApiException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
-        // 역할 설정 (요청에 없으면 기본값 USER)
-        UserRole role;
-        if (request.getRole() != null && !request.getRole().isEmpty()) {
-            try {
-                // "ROLE_USER" 또는 "USER" 둘 다 처리
-                String roleStr = request.getRole().toUpperCase();
-                if (!roleStr.startsWith("ROLE_")) {
-                    roleStr = "ROLE_" + roleStr;
-                }
-                role = UserRole.valueOf(roleStr);
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid role provided: {}, defaulting to USER", request.getRole());
-                role = UserRole.ROLE_USER;
-            }
-        } else {
-            role = UserRole.ROLE_USER;
-        }
-
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -58,7 +40,7 @@ public class UserService {
                 .loginId(request.getLoginId())
                 .password(encodedPassword)
                 .nickname(request.getLoginId()) // 기본값: loginId와 동일
-                .role(role)
+                .role(UserRole.ROLE_USER)
                 .build();
 
         User savedUser = userRepository.save(user);

@@ -27,13 +27,6 @@ public class UserDto {
 
         @NotBlank(message = "비밀번호를 입력해주세요.")
         private String password;
-
-        @NotBlank(message = "학교명을 입력해주세요.")
-        private String univ;
-
-        //"ROLE_USER" 또는 "ROLE_ADMIN"
-        private String role;
-
     }
 
     //어드민으로 계정 변경시
