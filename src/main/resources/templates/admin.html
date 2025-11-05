@@ -131,6 +131,39 @@
     </div>
   </div>
 
+    <!-- Problem Management -->
+    <div class="table-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">📝 문제 관리</h4>
+            <button class="btn btn-success" onclick="showCreateProblemModal()">➕ 새 문제 추가</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>카테고리</th>
+                    <th>난이도</th>
+                    <th>유형</th>
+                    <th>질문 (미리보기)</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody id="problemTableBody">
+                <tr>
+                    <td colspan="6" class="text-center text-muted">로딩 중...</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <nav>
+            <ul class="pagination justify-content-center" id="problemPagination">
+            </ul>
+        </nav>
+    </div>
+
   <!-- Problem Statistics by Category -->
   <div class="table-card">
     <h4 class="mb-4">📊 카테고리별 문제 통계</h4>
@@ -189,140 +222,474 @@
   </div>
 </div>
 
+<!-- Create Problem Modal -->
+<div class="modal fade" id="createProblemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">새 문제 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createProblemForm">
+                    <div class="mb-3">
+                        <label class="form-label">유형</label>
+                        <select class="form-select" id="problemType" required>
+                            <option value="MULTIPLE_CHOICE">객관식</option>
+                            <option value="SHORT_ANSWER">단답형</option>
+                            <option value="DESCRIPTIVE">서술형</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">카테고리</label>
+                        <select class="form-select" id="category" required>
+                            <option value="SPRING_CORE">Spring Core</option>
+                            <option value="SPRING_BOOT">Spring Boot</option>
+                            <option value="SPRING_MVC">Spring MVC</option>
+                            <option value="SPRING_DATA_JPA">Spring Data JPA</option>
+                            <option value="SPRING_SECURITY">Spring Security</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">난이도</label>
+                        <select class="form-select" id="difficulty" required>
+                            <option value="BEGINNER">초급</option>
+                            <option value="INTERMEDIATE">중급</option>
+                            <option value="ADVANCED">고급</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">질문</label>
+                        <textarea class="form-control" id="question" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3" id="choicesSection">
+                        <label class="form-label">선택지 (객관식인 경우, 줄바꿈으로 구분)</label>
+                        <textarea class="form-control" id="choices" rows="4"
+                                  placeholder="예:\n선택지1\n선택지2\n선택지3\n선택지4"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">정답</label>
+                        <input type="text" class="form-control" id="answer" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">해설</label>
+                        <textarea class="form-control" id="explanation" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="createProblem()">생성</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // ========== 인증 및 권한 체크 ==========
-  function checkAdminAuth() {
-    const accessToken = localStorage.getItem('access_token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    let createProblemModal;
+    let currentPage = 0;
+    let totalPages = 0;
 
-    // 1. 로그인 체크
-    if (!accessToken) {
-      alert('로그인이 필요한 페이지입니다.');
-      window.location.href = '/login';
-      return false;
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        createProblemModal = new bootstrap.Modal(document.getElementById('createProblemModal'));
+        loadProblems();
 
-    // 2. 관리자 권한 체크
-    if (user.role !== 'ROLE_ADMIN') {
-      alert('관리자 권한이 필요합니다.');
-      window.location.href = '/';
-      return false;
-    }
+        // 문제 유형에 따라 선택지 입력란 표시/숨김
+        document.getElementById('problemType').addEventListener('change', function() {
+            const choicesSection = document.getElementById('choicesSection');
+            choicesSection.style.display = this.value === 'MULTIPLE_CHOICE' ? 'block' : 'none';
+        });
+    });
 
-    // 3. 관리자 이름 표시
-    document.getElementById('adminName').textContent = user.loginId || '관리자';
+    async function loadProblems(page = 0) {
+        const accessToken = localStorage.getItem('access_token');
 
-    return true;
-  }
+        try {
+            const response = await fetch(`/api/admin/problems?page=${page}&size=10`, {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
 
-  // 페이지 로드 시 즉시 실행
-  if (!checkAdminAuth()) {
-    throw new Error('Admin authentication required');
-  }
+            if (!response.ok) {
+                handleAuthError(response.status);
+                return;
+            }
 
-  // ========== API 호출 ==========
-  async function loadUsers() {
-    const accessToken = localStorage.getItem('access_token');
+            const data = await response.json();
+            displayProblems(data.problems);
+            displayPagination(data);
 
-    try {
-      // TODO: 실제 API 엔드포인트로 변경
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': 'Bearer ' + accessToken
+        } catch (error) {
+            console.error('문제 로드 오류:', error);
         }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-          return;
-        }
-        if (response.status === 403) {
-          alert('권한이 없습니다.');
-          window.location.href = '/';
-          return;
-        }
-        throw new Error('사용자 로드 실패');
-      }
-
-      const users = await response.json();
-      displayUsers(users);
-      document.getElementById('totalUsers').textContent = users.length;
-
-    } catch (error) {
-      console.error('사용자 로드 오류:', error);
-
-      // 임시 데이터 (개발용)
-      const users = [
-        { id: 1, loginId: 'user1', univ: '서울대학교', role: 'ROLE_USER', createdAt: '2025-01-01' },
-        { id: 2, loginId: 'admin', univ: '연세대학교', role: 'ROLE_ADMIN', createdAt: '2025-01-02' }
-      ];
-      displayUsers(users);
-      document.getElementById('totalUsers').textContent = users.length;
-    }
-  }
-
-  function displayUsers(users) {
-    const tbody = document.getElementById('userTableBody');
-
-    if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">사용자가 없습니다</td></tr>';
-      return;
     }
 
-    tbody.innerHTML = users.map(user => `
+    function displayProblems(problems) {
+        const tbody = document.getElementById('problemTableBody');
+
+        if (problems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">문제가 없습니다</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = problems.map(p => `
         <tr>
-            <td>${user.id}</td>
-            <td><strong>${user.loginId}</strong></td>
-            <td>${user.univ}</td>
+            <td>${p.id}</td>
+            <td><span class="badge bg-info">${getCategoryName(p.category)}</span></td>
+            <td><span class="badge bg-${getDifficultyColor(p.difficulty)}">${getDifficultyName(p.difficulty)}</span></td>
+            <td>${getTypeName(p.problemType)}</td>
+            <td>${p.question.substring(0, 50)}...</td>
             <td>
-                <span class="badge ${user.role === 'ROLE_ADMIN' ? 'bg-danger' : 'bg-primary'}">
-                    ${user.role === 'ROLE_ADMIN' ? '관리자' : '사용자'}
-                </span>
-            </td>
-            <td>${user.createdAt}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewUser(${user.id})">
-                    상세
+                <button class="btn btn-sm btn-outline-warning btn-action" onclick="editProblem(${p.id})">
+                    수정
                 </button>
-                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteUser(${user.id})">
+                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteProblem(${p.id})">
                     삭제
                 </button>
             </td>
         </tr>
     `).join('');
-  }
-
-  function refreshUsers() {
-    loadUsers();
-  }
-
-  function viewUser(userId) {
-    alert(`사용자 ${userId} 상세 정보 (구현 예정)`);
-  }
-
-  function deleteUser(userId) {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      alert(`사용자 ${userId} 삭제 (구현 예정)`);
     }
-  }
 
-  function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/';
+    function displayPagination(data) {
+        currentPage = data.currentPage;
+        totalPages = data.totalPages;
+
+        const pagination = document.getElementById('problemPagination');
+        let html = '';
+
+        // 이전 버튼
+        html += `<li class="page-item ${!data.hasPrevious ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="loadProblems(${currentPage - 1}); return false;">이전</a>
+    </li>`;
+
+        // 페이지 번호
+        for (let i = 0; i < totalPages; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="loadProblems(${i}); return false;">${i + 1}</a>
+        </li>`;
+        }
+
+        // 다음 버튼
+        html += `<li class="page-item ${!data.hasNext ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="loadProblems(${currentPage + 1}); return false;">다음</a>
+    </li>`;
+
+        pagination.innerHTML = html;
     }
-  }
 
-  // ========== 페이지 초기화 ==========
-  document.addEventListener('DOMContentLoaded', function() {
-    loadUsers();
-  });
+    function showCreateProblemModal() {
+        document.getElementById('createProblemForm').reset();
+        createProblemModal.show();
+    }
+
+    async function createProblem() {
+        const problemType = document.getElementById('problemType').value;
+        const category = document.getElementById('category').value;
+        const difficulty = document.getElementById('difficulty').value;
+        const question = document.getElementById('question').value;
+        const answer = document.getElementById('answer').value;
+        const explanation = document.getElementById('explanation').value;
+
+        // 선택지 처리
+        let choices = null;
+        if (problemType === 'MULTIPLE_CHOICE') {
+            const choicesText = document.getElementById('choices').value;
+            choices = choicesText.split('\n').filter(c => c.trim());
+        }
+
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch('/api/admin/problems', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                body: JSON.stringify({
+                    problemType,
+                    category,
+                    difficulty,
+                    question,
+                    choices,
+                    answer,
+                    explanation
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('문제 생성 실패');
+            }
+
+            alert('문제가 생성되었습니다!');
+            createProblemModal.hide();
+            loadProblems();
+
+        } catch (error) {
+            console.error('문제 생성 오류:', error);
+            alert('문제 생성에 실패했습니다.');
+        }
+    }
+
+    async function deleteProblem(problemId) {
+        if (!confirm('정말 이 문제를 삭제하시겠습니까?')) {
+            return;
+        }
+
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch(`/api/admin/problems/${problemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('문제 삭제 실패');
+            }
+
+            const result = await response.json();
+            alert(result.message);
+            loadProblems(currentPage);
+
+        } catch (error) {
+            console.error('문제 삭제 오류:', error);
+            alert('문제 삭제에 실패했습니다.');
+        }
+    }
+
+    function editProblem(problemId) {
+        // TODO: 수정 모달 구현
+        alert(`문제 ${problemId} 수정 기능 (구현 예정)`);
+    }
+
+    function getCategoryName(category) {
+        const names = {
+            'SPRING_CORE': 'Spring Core',
+            'SPRING_BOOT': 'Spring Boot',
+            'SPRING_MVC': 'Spring MVC',
+            'SPRING_DATA_JPA': 'Spring Data JPA',
+            'SPRING_SECURITY': 'Spring Security'
+        };
+        return names[category] || category;
+    }
+
+    function getDifficultyName(difficulty) {
+        const names = {
+            'BEGINNER': '초급',
+            'INTERMEDIATE': '중급',
+            'ADVANCED': '고급'
+        };
+        return names[difficulty] || difficulty;
+    }
+
+    function getDifficultyColor(difficulty) {
+        const colors = {
+            'BEGINNER': 'success',
+            'INTERMEDIATE': 'warning',
+            'ADVANCED': 'danger'
+        };
+        return colors[difficulty] || 'secondary';
+    }
+
+    function getTypeName(type) {
+        const names = {
+            'MULTIPLE_CHOICE': '객관식',
+            'SHORT_ANSWER': '단답형',
+            'DESCRIPTIVE': '서술형'
+        };
+        return names[type] || type;
+    }
+
+    function checkAdminAuth() {
+        const accessToken = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!accessToken) {
+            alert('로그인이 필요한 페이지입니다.');
+            window.location.href = '/login';
+            return false;
+        }
+
+        if (user.role !== 'ROLE_ADMIN') {
+            alert('관리자 권한이 필요합니다.');
+            window.location.href = '/';
+            return false;
+        }
+
+        document.getElementById('adminName').textContent = user.loginId || '관리자';
+        return true;
+    }
+
+    if (!checkAdminAuth()) {
+        throw new Error('Admin authentication required');
+    }
+
+    // ========== 대시보드 통계 로드 ==========
+    async function loadDashboard() {
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch('/api/admin/dashboard', {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                handleAuthError(response.status);
+                return;
+            }
+
+            const data = await response.json();
+
+            // 통계 표시
+            document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+            document.getElementById('totalProblems').textContent = data.totalProblems || 0;
+
+        } catch (error) {
+            console.error('대시보드 로드 실패:', error);
+        }
+    }
+
+    // ========== 사용자 목록 로드 ==========
+    async function loadUsers() {
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                handleAuthError(response.status);
+                return;
+            }
+
+            const users = await response.json();
+            displayUsers(users);
+
+        } catch (error) {
+            console.error('사용자 로드 오류:', error);
+            document.getElementById('userTableBody').innerHTML =
+                '<tr><td colspan="6" class="text-center text-danger">데이터 로드 실패</td></tr>';
+        }
+    }
+
+    function displayUsers(users) {
+        const tbody = document.getElementById('userTableBody');
+
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">사용자가 없습니다</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.userId}</td>
+            <td><strong>${user.loginId}</strong></td>
+            <td>${user.nickname || '-'}</td>
+            <td>
+                <span class="badge ${user.role === 'ROLE_ADMIN' ? 'bg-danger' : 'bg-primary'}">
+                    ${user.role === 'ROLE_ADMIN' ? '관리자' : '사용자'}
+                </span>
+            </td>
+            <td>${formatDate(user.createdAt)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewUser(${user.userId})">
+                    상세
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteUser(${user.userId})">
+                    삭제
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    }
+
+    // ========== 사용자 관리 ==========
+    function viewUser(userId) {
+        window.location.href = `/admin/users/${userId}`;
+    }
+
+    async function deleteUser(userId) {
+        if (!confirm('정말 이 사용자를 삭제하시겠습니까?')) {
+            return;
+        }
+
+        const accessToken = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                handleAuthError(response.status);
+                return;
+            }
+
+            const result = await response.json();
+            alert(result.message);
+            loadUsers(); // 목록 새로고침
+
+        } catch (error) {
+            console.error('사용자 삭제 오류:', error);
+            alert('사용자 삭제에 실패했습니다.');
+        }
+    }
+
+    // ========== 유틸리티 함수 ==========
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR');
+    }
+
+    function handleAuthError(status) {
+        if (status === 401) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            localStorage.clear();
+            window.location.href = '/login';
+        } else if (status === 403) {
+            alert('권한이 없습니다.');
+            window.location.href = '/';
+        }
+    }
+
+    function refreshUsers() {
+        loadUsers();
+    }
+
+    function logout() {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    }
+
+    // ========== 페이지 초기화 ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        loadUsers();
+    });
 </script>
 </body>
 </html>
